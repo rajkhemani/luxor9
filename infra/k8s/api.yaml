@@ -1,0 +1,78 @@
+# Minimal Kubernetes manifests for the LUXOR9 API.
+# Apply with: kubectl apply -f infra/k8s/api.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: luxor9-api
+  labels:
+    app: luxor9-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: luxor9-api
+  template:
+    metadata:
+      labels:
+        app: luxor9-api
+    spec:
+      containers:
+        - name: api
+          image: luxor9-api:latest
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          envFrom:
+            - secretRef:
+                name: luxor9-secrets
+                optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: luxor9-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: luxor9-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: luxor9-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: luxor9-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

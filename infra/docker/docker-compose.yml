@@ -1,0 +1,40 @@
+# Local development stack: API + Postgres (pgvector) + Redis.
+# Postgres and Redis are provisioned for the persistence/event-stream work in
+# later roadmap phases; the API runs fine without them today.
+#
+#   docker compose -f infra/docker/docker-compose.yml up --build
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://luxor9:luxor9@postgres:5432/luxor9
+      REDIS_URL: redis://redis:6379/0
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: luxor9
+      POSTGRES_PASSWORD: luxor9
+      POSTGRES_DB: luxor9
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
