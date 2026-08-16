@@ -1,0 +1,341 @@
+{
+  "metadata": {
+    "visual": {
+      "presentation": {
+        "themes": {
+          "b5cf35c4-a0bc-4f8e-b36e-06c467e747c9": {
+            "themeColors": {
+              "primaryColor": "#1a1a1a",
+              "secondaryColor": "#7a7a7a",
+              "backgroundColor": "#ffffff",
+              "textColor": "#1a1a1a",
+              "primaryTextColor": "#ffffff"
+            },
+            "template": "basic",
+            "isDefaultTheme": true,
+            "palette": {
+              "primary": {
+                "0": "#000000",
+                "5": "#001417",
+                "10": "#001f24",
+                "15": "#002b30",
+                "20": "#00363d",
+                "25": "#00424a",
+                "30": "#004f58",
+                "35": "#005b66",
+                "40": "#006874",
+                "50": "#008391",
+                "60": "#00a0b0",
+                "70": "#22bccf",
+                "80": "#4fd8eb",
+                "90": "#97f0ff",
+                "95": "#d0f8ff",
+                "98": "#edfcff",
+                "99": "#f6feff",
+                "100": "#ffffff"
+              },
+              "secondary": {
+                "0": "#000000",
+                "5": "#001417",
+                "10": "#051f23",
+                "15": "#10292d",
+                "20": "#1c3438",
+                "25": "#273f43",
+                "30": "#334b4f",
+                "35": "#3e565b",
+                "40": "#4a6267",
+                "50": "#637b80",
+                "60": "#7c959a",
+                "70": "#96b0b4",
+                "80": "#b1cbd0",
+                "90": "#cde7ec",
+                "95": "#dbf6fa",
+                "98": "#edfcff",
+                "99": "#f6feff",
+                "100": "#ffffff"
+              },
+              "tertiary": "",
+              "neutral": {
+                "0": "#000000",
+                "5": "#0e1212",
+                "10": "#191c1d",
+                "15": "#232627",
+                "20": "#2e3132",
+                "25": "#393c3d",
+                "30": "#444748",
+                "35": "#505354",
+                "40": "#5c5f5f",
+                "50": "#747878",
+                "60": "#8e9192",
+                "70": "#a9acac",
+                "80": "#c4c7c7",
+                "90": "#e1e3e3",
+                "95": "#eff1f1",
+                "98": "#f8fafa",
+                "99": "#fafdfd",
+                "100": "#ffffff"
+              },
+              "neutralVariant": {
+                "0": "#000000",
+                "5": "#091214",
+                "10": "#141d1f",
+                "15": "#1e2729",
+                "20": "#293234",
+                "25": "#343d3f",
+                "30": "#3f484a",
+                "35": "#4b5456",
+                "40": "#576062",
+                "50": "#6f797a",
+                "60": "#899294",
+                "70": "#a3adaf",
+                "80": "#bfc8ca",
+                "90": "#dbe4e6",
+                "95": "#e9f2f4",
+                "98": "#f2fbfd",
+                "99": "#f6feff",
+                "100": "#ffffff"
+              },
+              "error": {
+                "0": "#000000",
+                "5": "#2d0001",
+                "10": "#410002",
+                "15": "#540003",
+                "20": "#690005",
+                "25": "#7e0007",
+                "30": "#93000a",
+                "35": "#a80710",
+                "40": "#ba1a1a",
+                "50": "#de3730",
+                "60": "#ff5449",
+                "70": "#ff897d",
+                "80": "#ffb4ab",
+                "90": "#ffdad6",
+                "95": "#ffedea",
+                "98": "#fff8f7",
+                "99": "#fffbff",
+                "100": "#ffffff"
+              }
+            }
+          }
+        },
+        "theme": "b5cf35c4-a0bc-4f8e-b36e-06c467e747c9"
+      }
+    },
+    "intent": "",
+    "revision_intents": [
+      "preview"
+    ],
+    "tags": [
+      "branding",
+      "identity",
+      "automation"
+    ],
+    "parameters": {}
+  },
+  "url": "",
+  "assets": {
+    "asset-7ea54a8a.gdoc": {
+      "data": [
+        {
+          "role": "user",
+          "parts": [
+            {
+              "storedData": {
+                "handle": "drive:/1PMGrMRLhrwT2cZB0umne0lLnb59SC55KcfRWoUi5-pU",
+                "mimeType": "application/vnd.google-apps.document"
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "Luxor9_Wan21_Kaggle_Automation.py",
+        "type": "file",
+        "subType": "application/vnd.google-apps.document",
+        "visual": {
+          "x": 450,
+          "y": -500
+        }
+      }
+    },
+    "asset-182cd857.gdoc": {
+      "data": [
+        {
+          "role": "user",
+          "parts": [
+            {
+              "storedData": {
+                "handle": "drive:/1dIWQSeL2cgI-jsejfhbWzL3D_UR3UnmysjelPD3NQhU",
+                "mimeType": "application/vnd.google-apps.document"
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "title": "render_pipeline.py",
+        "type": "file",
+        "subType": "application/vnd.google-apps.document",
+        "visual": {
+          "x": 450,
+          "y": -600
+        }
+      }
+    }
+  },
+  "title": "Luxor9 Content Engine (Simple)",
+  "description": "The simplified Luxor9 content engine: brief in, brand story + reel scripts, then a complete content package (video, voice, stills, audio) and a polished showcase + Drive archive. Four steps, zero-touch flow.",
+  "version": "0.1.0",
+  "nodes": [
+    {
+      "id": "ask_user_campaign_brief",
+      "metadata": {
+        "title": "Campaign Brief",
+        "visual": {
+          "x": 0,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": true
+      },
+      "type": "embed://a2/a2.bgl.json#21ee02e7-83fa-49d0-964c-0cab10eafc2c",
+      "configuration": {
+        "description": {
+          "parts": [
+            {
+              "text": "### 📝 START HERE: Campaign Brief\nDescribe the campaign or \"brand story\" you want to tell. Who is the audience, and what is the core message?\n\n**Try one:**\n- **The Living Blueprint**: a world rendered in real-time from the code.\n- **The OS for Reality**: authentic life optimized by geometric digital layers.\n- **Architects of the Void**: a minimalist, high-tech philosophical narrative."
+            }
+          ],
+          "role": "user"
+        },
+        "p-modality": "Text",
+        "p-required": true,
+        "config$prompt": {
+          "parts": [
+            {
+              "text": "You are the Luxor9 creative strategist.\n\n1. Read {{\"type\":\"asset\",\"path\":\"asset-7ea54a8a.gdoc\",\"title\":\"Luxor9_Wan21_Kaggle_Automation.py\"}} and {{\"type\":\"asset\",\"path\":\"asset-182cd857.gdoc\",\"title\":\"render_pipeline.py\"}} to absorb the brand's technical DNA.\n2. Optionally search the web for the single most viral industrial/cyberpunk trend of the hour.\n3. Output a crisp campaign brief (audience, core message, one hero angle) to the next step."
+            }
+          ],
+          "role": "user"
+        }
+      }
+    },
+    {
+      "id": "node_brand_story",
+      "metadata": {
+        "title": "Brand Story & Reel Scripts",
+        "visual": {
+          "x": 420,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": true
+      },
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "configuration": {
+        "config$prompt": {
+          "parts": [
+            {
+              "text": "Dir: Brand Story & Scripts.\n\n1. Synthesize a brand identity report (design guidelines, color scheme, messaging) from {{\"type\":\"asset\",\"path\":\"asset-7ea54a8a.gdoc\",\"title\":\"Luxor9_Wan21_Kaggle_Automation.py\"}} and {{\"type\":\"asset\",\"path\":\"asset-182cd857.gdoc\",\"title\":\"render_pipeline.py\"}}.\n2. Combine with the campaign brief from {{\"type\":\"in\",\"path\":\"ask_user_campaign_brief\",\"title\":\"Campaign Brief\"}}.\n3. Script TWO (2) high-impact 8s cinematic reels and define one avatar persona.\n4. Draft CGI/UGC ad concepts and poster directions.\n5. Return the full brand story with generation prompts ready for the next step."
+            }
+          ],
+          "role": "user"
+        },
+        "generation-mode": "agent"
+      }
+    },
+    {
+      "id": "node_content_package",
+      "metadata": {
+        "title": "Content Package",
+        "visual": {
+          "x": 840,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": true
+      },
+      "type": "embed://a2/generate.bgl.json#module:main",
+      "configuration": {
+        "config$prompt": {
+          "parts": [
+            {
+              "text": "Curated Content Package.\n\n1. Use the brand story, scripts, and prompts from {{\"type\":\"in\",\"path\":\"node_brand_story\",\"title\":\"Brand Story & Reel Scripts\"}}.\n2. Let the user pick which script to produce.\n3. Generate:\n   - the 8s cinematic reel for the chosen script,\n   - high-quality voiceover (futuristic, cold, industrial),\n   - cinematic 360° skybox stills of the factory environment,\n   - 4K avatar, CGI ad, and poster images,\n   - an industrial techno soundtrack + SFX.\n4. Log all generated assets to memory and summarize the package."
+            }
+          ],
+          "role": "user"
+        },
+        "generation-mode": "agent"
+      }
+    },
+    {
+      "id": "node_showcase",
+      "metadata": {
+        "title": "Showcase & Archive",
+        "visual": {
+          "x": 1260,
+          "y": 0,
+          "collapsed": "expanded",
+          "outputHeight": 88
+        },
+        "userModified": true
+      },
+      "type": "embed://a2/a2.bgl.json#module:render-outputs",
+      "configuration": {
+        "text": {
+          "parts": [
+            {
+              "text": "Showcase the campaign:\n- Media from {{\"type\":\"in\",\"path\":\"node_content_package\",\"title\":\"Content Package\"}}\n- Story from {{\"type\":\"in\",\"path\":\"node_brand_story\",\"title\":\"Brand Story & Reel Scripts\"}}\n- Brief from {{\"type\":\"in\",\"path\":\"ask_user_campaign_brief\",\"title\":\"Campaign Brief\"}}\n\nStyle: Futuristic Industrial. Then archive the full campaign (story, scripts, media manifest) as a Google Document."
+            }
+          ],
+          "role": "user"
+        },
+        "b-system-instruction": {
+          "parts": [
+            {
+              "text": "You are an AI Web Developer. Generate a single, self-contained HTML document for an iframe.\n\n**Visual aesthetic:**\n- Premium, mobile-first design. Dark industrial theme with teal/cyan accents.\n- Import Inter/Outfit from Google Fonts; avoid browser defaults.\n- Smooth gradients, subtle micro-animations.\n- Use Tailwind CDN: <script src=\"https://cdn.tailwindcss.com\"></script>\n\n**Constraints:**\n- NO external embeds (scripts/images/iframes/links) from external URLs — CSP blocks them.\n- ONLY use media URLs explicitly passed in the input. Do not hallucinate media.\n- Render ALL passed media (images, videos, audio).\n- No fake navigation links. No footer content or legal text.\n- Return only code, opening with the literal string ```html."
+            }
+          ],
+          "role": "user"
+        },
+        "p-render-mode": "Auto",
+        "b-render-model-name": "gemini-flash"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "ask_user_campaign_brief",
+      "to": "node_brand_story",
+      "out": "context",
+      "in": "p-z-ask_user_campaign_brief"
+    },
+    {
+      "from": "node_brand_story",
+      "to": "node_content_package",
+      "out": "context",
+      "in": "p-z-node_brand_story"
+    },
+    {
+      "from": "node_content_package",
+      "to": "node_showcase",
+      "out": "context",
+      "in": "p-z-node_content_package"
+    },
+    {
+      "from": "node_brand_story",
+      "to": "node_showcase",
+      "out": "context",
+      "in": "p-z-node_brand_story"
+    },
+    {
+      "from": "ask_user_campaign_brief",
+      "to": "node_showcase",
+      "out": "context",
+      "in": "p-z-ask_user_campaign_brief"
+    }
+  ]
+}
