@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 export type Workflow = {
   id: string;
@@ -17,6 +17,23 @@ export type Workflow = {
     plan: Record<string, unknown>;
   } | null;
   created_at?: string;
+};
+
+export type OverviewData = {
+  active_workflows: number;
+  pending_approvals: number;
+  completed_workflows: number;
+  open_exceptions: number;
+  recent_workflows: Workflow[];
+};
+
+export type AguiStatus = {
+  enabled: boolean;
+  agents?: Array<{ name: string; path: string }>;
+  connectivity?: Record<string, unknown>;
+  coworker_hub?: string;
+  duo_skin?: string;
+  intelligence?: string;
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -47,13 +64,13 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const client = {
-  overview: () => api<{
-    active_workflows: number;
-    pending_approvals: number;
-    completed_workflows: number;
-    open_exceptions: number;
-    recent_workflows: Workflow[];
-  }>("/api/v1/overview"),
+  health: async (): Promise<{ status: string }> => {
+    const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json() as Promise<{ status: string }>;
+  },
+  aguiStatus: () => api<AguiStatus>("/api/v1/agui/status"),
+  overview: () => api<OverviewData>("/api/v1/overview"),
   workflows: () => api<Workflow[]>("/api/v1/workflows"),
   workflow: (id: string) => api<Workflow>(`/api/v1/workflows/${id}`),
   approvals: () =>

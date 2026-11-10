@@ -14,7 +14,7 @@ Chat / Copilot → blueprint approve/decline → hierarchical agents (Orchestrat
 
 ```text
 apps/api/                 FastAPI — Trust, workflows, CMO graph, AG-UI /api/v1/agui/cmo
-apps/control-tower/       Next.js — Tower + Command Bridge (/command) + Luxor Stack
+apps/control-tower/       Next.js — Marketing (/home) + Tower + Command Bridge + Luxor Stack
 apps/mobile/              Flutter iOS/Android mirror
 infrastructure/           Compose + Dockerfiles (API + UI + Postgres)
 docs/                     PRD, ADRs, INFRASTRUCTURE, GTM, mobile

@@ -1,34 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LUXOR9 Control Tower",
-  description: "Governed intelligence for real-estate developers",
+  title: {
+    default: "LUXOR9 Control Tower",
+    template: "%s · LUXOR9",
+  },
+  description: "Control AI execution. Prove every outcome.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <header className="site-header">
-          <div className="brand">
-            LUXOR<span>9</span>
-          </div>
-          <nav>
-            <Link href="/">Overview</Link>
-            <Link href="/stack">Stack</Link>
-            <Link href="/command">Command Bridge</Link>
-            <Link href="/chat">Chat</Link>
-            <Link href="/workflows">Workflows</Link>
-            <Link href="/approvals">Approvals</Link>
-            <Link href="/agents">Workforce</Link>
-            <Link href="/atelier">Atelier</Link>
-            <Link href="/metering">Metering</Link>
-          </nav>
-        </header>
-        <main>{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

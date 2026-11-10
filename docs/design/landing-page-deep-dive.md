@@ -1,7 +1,7 @@
 # LUXOR9 Landing Page — Deep-Dive Implementation Brief (v3)
 
-**Status:** Ready for design + frontend engineering handoff  
-**Surface:** `apps/control-tower` marketing route — prefer `app/(marketing)/page.tsx` (new) with shared chrome; keep `/` as authenticated Control Tower overview  
+**Status:** Implementation in progress — first cut live at `/home`  
+**Surface:** `apps/control-tower` marketing route at `app/(marketing)/home/page.tsx` with shared chrome; keep `/` as Control Tower overview  
 **Doctrine line:** Control AI execution. Prove every outcome.  
 **Primary GTM:** Dubai real-estate developers (expandable to other contexts later)  
 **Brand source of truth:** `apps/control-tower/lib/luxor-brand.ts` + CSS tokens in `app/globals.css`  
