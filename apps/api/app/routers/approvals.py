@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import Principal, get_principal, require_roles
 from app.database import get_db
-from app.models.entities import Approval, ApprovalStatus, RoleName
+from app.models.entities import Approval, RoleName
 from app.schemas.common import ApprovalDecisionRequest, ApprovalOut
 from app.services import trust
 from app.services import workflows as workflow_service
@@ -74,18 +74,24 @@ async def approve(
             decision="approve",
             reason=body.reason or "approved",
         )
-        await db.commit()
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    receipt = None
-    if approval.action == "campaign_publish":
-        try:
+        receipt = None
+        if approval.action == "campaign_publish":
+            # Execute inside the same transaction before commit so failures stay pending-retryable
+            # only if we roll back — for sandbox we commit together after successful receipt.
             receipt = await workflow_service.execute_sandbox_publish_after_approval(
-                db, principal, approval.id
+                db, principal, approval.id, commit=False
             )
-        except PermissionError as exc:
-            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        await db.commit()
+        await db.refresh(approval)
+    except ValueError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except PermissionError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except Exception:
+        await db.rollback()
+        raise
 
     return {"approval": _out(approval), "execution": receipt}
 
@@ -107,10 +113,8 @@ async def reject(
             reason=body.reason or "rejected",
         )
         await db.commit()
+        await db.refresh(approval)
     except ValueError as exc:
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _out(approval)
-
-
-# silence unused import warning in some linters
-_ = ApprovalStatus

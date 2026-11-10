@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import Principal, get_principal
+from app.auth import Principal, get_principal, require_roles
 from app.database import get_db
+from app.models.entities import RoleName
 from app.schemas.common import (
     BlueprintDecisionRequest,
     OverviewResponse,
@@ -58,7 +59,7 @@ async def get_workflow(
 async def blueprint_decision(
     workflow_id: str,
     body: BlueprintDecisionRequest,
-    principal: Principal = Depends(get_principal),
+    principal: Principal = Depends(require_roles(RoleName.approver, RoleName.admin)),
     db: AsyncSession = Depends(get_db),
 ) -> WorkflowOut:
     try:
