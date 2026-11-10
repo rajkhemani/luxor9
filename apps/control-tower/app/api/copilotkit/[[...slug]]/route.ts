@@ -7,9 +7,14 @@ import {
 const aguiUrl =
   process.env.AGUI_CMO_URL ?? "http://127.0.0.1:8000/api/v1/agui/cmo";
 
+const cmoAgent = new HttpAgent({ url: aguiUrl });
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- bridge duplicate @ag-ui AbstractAgent typings
 const agents: any = {
-  luxor9_cmo: new HttpAgent({ url: aguiUrl }),
+  // Canonical CMO agent id used by Control Tower /copilot
+  luxor9_cmo: cmoAgent,
+  // CopilotKit falls back to "default" if a chat omits agentId — keep both.
+  default: cmoAgent,
 };
 
 const runtime = new CopilotRuntime({ agents });

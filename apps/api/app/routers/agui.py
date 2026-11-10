@@ -14,7 +14,10 @@ _CONNECTIVITY = {
     "capabilities": {
         "live_stream": True,
         "human_in_the_loop": True,
-        "reconnect_resume": "thread_id + LangGraph checkpointer (Postgres in prod)",
+        "reconnect_resume": (
+            "thread_id + MemorySaver (MVP process-local); "
+            "Postgres checkpointer planned as L9-011 for multi-process resume"
+        ),
         "recursive_subagents": "CMO → parallel market + competitor → strategy → evaluator",
         "mixed_payloads": "messages + blueprint/report state + tool events",
     },
