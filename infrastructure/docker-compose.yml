@@ -1,3 +1,4 @@
+# Local thin stack — planes stay in sync
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,6 +15,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.api
+    environment:
+      ENVIRONMENT: development
+      AUTH_DISABLED_FOR_TESTS: "true"
+      DATABASE_URL: postgresql+asyncpg://luxor9:luxor9@postgres:5432/luxor9
+      DATABASE_URL_SYNC: postgresql://luxor9:luxor9@postgres:5432/luxor9
+      API_CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  control-tower:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.ui
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    environment:
+      PORT: "3000"
+      AGUI_CMO_URL: http://api:8000/api/v1/agui/cmo
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
 
 volumes:
   luxor9_pg:

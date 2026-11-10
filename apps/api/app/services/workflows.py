@@ -118,6 +118,7 @@ async def decide_blueprint(
         select(Workflow)
         .where(Workflow.id == workflow_id, Workflow.tenant_id == principal.tenant_id)
         .options(selectinload(Workflow.blueprint))
+        .with_for_update()
     )
     wf = result.scalar_one_or_none()
     if wf is None or wf.blueprint is None:
@@ -153,8 +154,13 @@ async def decide_blueprint(
             payload={"reason": reason},
         )
     )
-    await db.commit()
-    return await execute_approved_workflow(db, principal, wf.id)
+    # Flush only — execute then commit once so graph failures leave the blueprint re-decidable.
+    await db.flush()
+    try:
+        return await execute_approved_workflow(db, principal, wf.id, commit=True)
+    except Exception:
+        await db.rollback()
+        raise
 
 
 async def _persist_report_artifacts(db: AsyncSession, wf: Workflow, report: dict) -> None:
@@ -221,7 +227,7 @@ async def _persist_report_artifacts(db: AsyncSession, wf: Workflow, report: dict
 
 
 async def execute_approved_workflow(
-    db: AsyncSession, principal: Principal, workflow_id: str
+    db: AsyncSession, principal: Principal, workflow_id: str, commit: bool = True
 ) -> Workflow:
     result = await db.execute(
         select(Workflow)
@@ -300,7 +306,10 @@ async def execute_approved_workflow(
         workflow_id=wf.id,
         meta={"status": wf.status.value},
     )
-    await db.commit()
+    if commit:
+        await db.commit()
+    else:
+        await db.flush()
     result = await db.execute(
         select(Workflow)
         .where(Workflow.id == wf.id, Workflow.tenant_id == principal.tenant_id)
@@ -310,7 +319,7 @@ async def execute_approved_workflow(
 
 
 async def execute_sandbox_publish_after_approval(
-    db: AsyncSession, principal: Principal, approval_id: str
+    db: AsyncSession, principal: Principal, approval_id: str, commit: bool = True
 ) -> dict:
     from app.models.entities import Approval
 
@@ -320,6 +329,27 @@ async def execute_sandbox_publish_after_approval(
     approval = result.scalar_one_or_none()
     if approval is None:
         raise ValueError("approval_not_found")
+
+    wf_result = await db.execute(
+        select(Workflow).where(
+            Workflow.id == approval.workflow_id, Workflow.tenant_id == principal.tenant_id
+        )
+    )
+    wf = wf_result.scalar_one_or_none()
+    if wf is None:
+        raise ValueError("workflow_not_found")
+
+    # Idempotency: if sandbox already executed for this approval, return prior receipt.
+    prior = await db.execute(
+        select(WorkflowEvent).where(
+            WorkflowEvent.workflow_id == wf.id,
+            WorkflowEvent.tenant_id == principal.tenant_id,
+            WorkflowEvent.event_type == "action.sandbox_executed",
+        )
+    )
+    existing_event = prior.scalars().first()
+    if existing_event is not None:
+        return existing_event.payload or {}
 
     await trust.recheck_before_execution(
         db,
@@ -335,22 +365,15 @@ async def execute_sandbox_publish_after_approval(
         workflow_id=approval.workflow_id,
         payload=approval.payload or {},
     )
-    wf_result = await db.execute(
-        select(Workflow).where(
-            Workflow.id == approval.workflow_id, Workflow.tenant_id == principal.tenant_id
+    wf.status = WorkflowStatus.completed
+    db.add(
+        WorkflowEvent(
+            tenant_id=principal.tenant_id,
+            workflow_id=wf.id,
+            event_type="action.sandbox_executed",
+            payload=receipt,
         )
     )
-    wf = wf_result.scalar_one_or_none()
-    if wf:
-        wf.status = WorkflowStatus.completed
-        db.add(
-            WorkflowEvent(
-                tenant_id=principal.tenant_id,
-                workflow_id=wf.id,
-                event_type="action.sandbox_executed",
-                payload=receipt,
-            )
-        )
     await emit_audit(
         db,
         tenant_id=principal.tenant_id,
@@ -360,7 +383,10 @@ async def execute_sandbox_publish_after_approval(
         resource_id=approval.resource_id,
         payload=receipt,
     )
-    await db.commit()
+    if commit:
+        await db.commit()
+    else:
+        await db.flush()
     return receipt
 
 

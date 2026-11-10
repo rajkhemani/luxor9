@@ -157,15 +157,21 @@ async def decide_approval(
     decision: str,
     reason: str = "",
 ) -> Approval:
+    # Row lock prevents concurrent double-approve on Postgres; SQLite ignores FOR UPDATE.
     result = await db.execute(
-        select(Approval).where(Approval.id == approval_id, Approval.tenant_id == tenant_id)
+        select(Approval)
+        .where(Approval.id == approval_id, Approval.tenant_id == tenant_id)
+        .with_for_update()
     )
     approval = result.scalar_one_or_none()
     if approval is None:
         raise ValueError("approval_not_found")
     if approval.status != ApprovalStatus.pending:
         raise ValueError("approval_not_pending")
-    if approval.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+    expires = approval.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if expires < datetime.now(timezone.utc):
         approval.status = ApprovalStatus.expired
         await db.flush()
         raise ValueError("approval_expired")

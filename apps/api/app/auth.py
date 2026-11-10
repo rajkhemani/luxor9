@@ -23,7 +23,18 @@ class Principal:
     role: RoleName
 
 
+def _demo_auth_allowed() -> bool:
+    settings = get_settings()
+    return settings.auth_disabled_for_tests or settings.environment == "development"
+
+
 async def _ensure_demo_principal(db: AsyncSession, clerk_user_id: str, email: str) -> Principal:
+    if not _demo_auth_allowed():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Demo auth is disabled outside development/tests",
+        )
+
     result = await db.execute(select(User).where(User.clerk_user_id == clerk_user_id))
     user = result.scalar_one_or_none()
     if user is None:
@@ -77,7 +88,8 @@ async def get_principal(
 ) -> Principal:
     settings = get_settings()
 
-    if settings.auth_disabled_for_tests or settings.environment == "development":
+    # Explicit demo / test path only — never treat raw Bearer tokens as verified identities.
+    if _demo_auth_allowed():
         if x_demo_user or settings.auth_disabled_for_tests or not authorization:
             demo_id = x_demo_user or "user_demo_admin"
             return await _ensure_demo_principal(db, demo_id, f"{demo_id}@luxor9.local")
@@ -85,13 +97,15 @@ async def get_principal(
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
 
-    token = authorization.split(" ", 1)[1].strip()
     if not settings.clerk_jwks_url:
-        return await _ensure_demo_principal(db, f"clerk:{token[:16]}", "clerk-user@luxor9.local")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Clerk JWKS is not configured; unverified bearer tokens are rejected",
+        )
 
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Configure Clerk JWKS verification or use development demo auth",
+        detail="Clerk JWKS verification is not implemented yet; use development demo auth",
     )
 
 
