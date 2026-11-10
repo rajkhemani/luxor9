@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
@@ -115,13 +116,19 @@ def route_start(state: CmoChatState) -> str:
 
 
 def build_agui_cmo_graph():
+    """Compile CMO chat graph with a checkpointer.
+
+    AG-UI / CopilotKit call ``aget_state`` with a ``thread_id``; LangGraph
+    requires a checkpointer for that. ``MemorySaver`` is correct for local MVP.
+    Durable multi-process resume uses Postgres checkpointer (L9-011).
+    """
     graph = StateGraph(CmoChatState)
     graph.add_node("draft", draft_blueprint_node)
     graph.add_node("execute", execute_or_decline_node)
     graph.add_conditional_edges(START, route_start, {"draft": "draft", "execute": "execute"})
     graph.add_edge("draft", END)
     graph.add_edge("execute", END)
-    return graph.compile()
+    return graph.compile(checkpointer=MemorySaver())
 
 
 _AGUI_GRAPH = None
@@ -132,3 +139,9 @@ def get_agui_cmo_graph():
     if _AGUI_GRAPH is None:
         _AGUI_GRAPH = build_agui_cmo_graph()
     return _AGUI_GRAPH
+
+
+def reset_agui_cmo_graph_for_tests() -> None:
+    """Clear cached compiled graph (tests only)."""
+    global _AGUI_GRAPH
+    _AGUI_GRAPH = None
