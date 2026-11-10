@@ -50,6 +50,8 @@ Copy `.env.example` to `.env` for Clerk later. Never commit secrets.
 
 See [AGENTS.md](AGENTS.md), [docs/PRD.md](docs/PRD.md), [docs/TECHNICAL_BLUEPRINT.md](docs/TECHNICAL_BLUEPRINT.md).
 
+Phase 0 architecture validation (review before next build): [docs/plans/2026-11-10-phase0-architecture-validation.md](docs/plans/2026-11-10-phase0-architecture-validation.md).
+
 ## License
 
 Proprietary — all rights reserved unless otherwise noted.
