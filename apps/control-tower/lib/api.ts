@@ -20,15 +20,25 @@ export type Workflow = {
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Demo-User": "user_demo_admin",
-      ...(init?.headers || {}),
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Demo-User": "user_demo_admin",
+        ...(init?.headers || {}),
+      },
+      cache: "no-store",
+    });
+  } catch (err) {
+    const why = err instanceof Error ? err.message : "network error";
+    throw new Error(
+      `API unreachable at ${API_BASE}${path} (${why}). ` +
+        "Start make api-dev and ensure API_CORS_ORIGINS includes this page origin " +
+        "(localhost and 127.0.0.1).",
+    );
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || res.statusText);

@@ -64,7 +64,7 @@ make sync-check          # assert planes wired
 | Var | API | Control Tower | Notes |
 |---|---|---|---|
 | `DATABASE_URL` | ✓ | — | async Postgres + checkpoint resume |
-| `API_CORS_ORIGINS` | ✓ | — | include Tower origin |
+| `API_CORS_ORIGINS` | ✓ | — | include both `localhost` and `127.0.0.1` Tower origins |
 | `CLERK_*` | ✓ | optional later | Hobby JWKS |
 | `NEXT_PUBLIC_API_BASE_URL` | — | ✓ | REST base |
 | `AGUI_CMO_URL` | — | ✓ | default `http://127.0.0.1:8000/api/v1/agui/cmo` |

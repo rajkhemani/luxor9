@@ -22,7 +22,7 @@ services:
       AUTH_DISABLED_FOR_TESTS: "false"
       DATABASE_URL: postgresql+asyncpg://luxor9:${POSTGRES_PASSWORD:-luxor9change}@postgres:5432/luxor9
       DATABASE_URL_SYNC: postgresql://luxor9:${POSTGRES_PASSWORD:-luxor9change}@postgres:5432/luxor9
-      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-http://localhost:3000}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       CLERK_JWKS_URL: ${CLERK_JWKS_URL:-}
       CLERK_ISSUER: ${CLERK_ISSUER:-}
     ports:
