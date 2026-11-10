@@ -3,6 +3,8 @@
 import { CopilotChat, CopilotKit } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 
+const CMO_AGENT_ID = "luxor9_cmo";
+
 export default function CopilotPage() {
   return (
     <section>
@@ -13,8 +15,9 @@ export default function CopilotPage() {
         reflect back coherently. Orchestration stays LangGraph; publish stays Trust Engine.
       </p>
       <div className="panel" style={{ marginTop: "1rem", minHeight: "28rem", padding: 0 }}>
-        <CopilotKit runtimeUrl="/api/copilotkit" agentId="luxor9_cmo">
+        <CopilotKit runtimeUrl="/api/copilotkit" agentId={CMO_AGENT_ID}>
           <CopilotChat
+            agentId={CMO_AGENT_ID}
             labels={{
               chatInputPlaceholder:
                 "Describe a Dubai launch brief… then reply approve to dispatch",
