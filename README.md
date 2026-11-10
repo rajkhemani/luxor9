@@ -50,6 +50,9 @@ Copy `.env.example` to `.env` for Clerk later. Never commit secrets.
 
 See [AGENTS.md](AGENTS.md), [docs/PRD.md](docs/PRD.md), [docs/TECHNICAL_BLUEPRINT.md](docs/TECHNICAL_BLUEPRINT.md).
 
+**Human-on-the-Loop status:** [docs/project/MASTER_STATUS.md](docs/project/MASTER_STATUS.md)  
+**Phase 00 discovery:** [docs/evidence/phase-reports/P00-discovery.md](docs/evidence/phase-reports/P00-discovery.md)
+
 ## License
 
 Proprietary — all rights reserved unless otherwise noted.

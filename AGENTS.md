@@ -58,3 +58,7 @@ At the end of every task, report:
 4. Known limitations or skipped checks.
 5. Any migration, security or operational risk.
 6. Exact next task recommended.
+
+## Human-on-the-Loop project system
+
+Persistent tracking lives under `docs/project/`, `docs/architecture/`, `docs/quality/`, and `docs/evidence/`. Conversational memory is not the project tracker. Phase gates and RED/AMBER/GREEN authority follow the founder HOTL meta-prompt. Start each major effort from `docs/project/MASTER_STATUS.md`.
