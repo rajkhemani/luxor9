@@ -8,7 +8,11 @@ class Settings(BaseSettings):
 
     environment: str = "development"
     log_level: str = "INFO"
-    api_cors_origins: str = "http://localhost:3000"
+    # Browser chat/copilot hit the API cross-origin; allow both localhost spellings.
+    api_cors_origins: str = (
+        "http://localhost:3000,http://127.0.0.1:3000,"
+        "http://localhost:3001,http://127.0.0.1:3001"
+    )
 
     database_url: str = "sqlite+aiosqlite:///./luxor9.dev.db"
     database_url_sync: str = "sqlite:///./luxor9.dev.db"

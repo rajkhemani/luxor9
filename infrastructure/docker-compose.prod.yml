@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: luxor9
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-luxor9change}
+      POSTGRES_DB: luxor9
+    volumes:
+      - luxor9_pg_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luxor9 -d luxor9"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.api
+    environment:
+      ENVIRONMENT: production
+      AUTH_DISABLED_FOR_TESTS: "false"
+      DATABASE_URL: postgresql+asyncpg://luxor9:${POSTGRES_PASSWORD:-luxor9change}@postgres:5432/luxor9
+      DATABASE_URL_SYNC: postgresql://luxor9:${POSTGRES_PASSWORD:-luxor9change}@postgres:5432/luxor9
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      CLERK_JWKS_URL: ${CLERK_JWKS_URL:-}
+      CLERK_ISSUER: ${CLERK_ISSUER:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  control-tower:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.ui
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    environment:
+      PORT: "3000"
+      AGUI_CMO_URL: http://api:8000/api/v1/agui/cmo
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  luxor9_pg_prod:

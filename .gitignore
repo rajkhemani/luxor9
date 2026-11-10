@@ -39,3 +39,7 @@ Thumbs.db
 
 *.egg-info/
 tsconfig.tsbuildinfo
+
+apps/api/*.db
+apps/mobile/.dart_tool/
+apps/mobile/build/

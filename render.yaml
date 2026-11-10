@@ -1,0 +1,43 @@
+# Render Blueprint — thin pilot deploy
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: luxor9-api
+    runtime: docker
+    dockerfilePath: ./infrastructure/Dockerfile.api
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: AUTH_DISABLED_FOR_TESTS
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: luxor9-db
+          property: connectionString
+      - key: API_CORS_ORIGINS
+        sync: false
+      - key: CLERK_JWKS_URL
+        sync: false
+      - key: CLERK_ISSUER
+        sync: false
+
+  - type: web
+    name: luxor9-control-tower
+    runtime: docker
+    dockerfilePath: ./infrastructure/Dockerfile.ui
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
+      - key: AGUI_CMO_URL
+        sync: false
+
+databases:
+  - name: luxor9-db
+    plan: basic-256mb
+    databaseName: luxor9
+    user: luxor9

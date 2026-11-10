@@ -10,6 +10,7 @@ from app.routers import (
     approvals,
     audit,
     chat,
+    demo,
     evidence,
     health,
     me,
@@ -43,6 +44,10 @@ def create_app() -> FastAPI:
     app.include_router(evidence.router)
     app.include_router(agents.router)
     app.include_router(audit.router)
+    app.include_router(demo.router)
+    from app.routers.agui import mount_agui
+
+    mount_agui(app)
     return app
 
 
