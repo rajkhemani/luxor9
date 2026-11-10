@@ -17,3 +17,9 @@ def test_agui_status_reports_cmo_agent():
     assert conn["capabilities"]["live_stream"] is True
     assert conn["capabilities"]["human_in_the_loop"] is True
     assert conn["learning_bucket"] == 3
+    assert conn["learning_status"] == "phase2_luxor_intelligence"
+    assert "coworker_hub" in body
+    assert "duo_skin" in body
+    assert "openbot" not in body
+    assert "openduet" not in body
+    assert "CopilotKit" not in body.get("intelligence", "")

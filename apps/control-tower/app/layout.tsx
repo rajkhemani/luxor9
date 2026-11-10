@@ -17,11 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <nav>
             <Link href="/">Overview</Link>
-            <Link href="/copilot">Copilot</Link>
+            <Link href="/stack">Stack</Link>
+            <Link href="/command">Command Bridge</Link>
             <Link href="/chat">Chat</Link>
             <Link href="/workflows">Workflows</Link>
             <Link href="/approvals">Approvals</Link>
             <Link href="/agents">Workforce</Link>
+            <Link href="/atelier">Atelier</Link>
             <Link href="/metering">Metering</Link>
           </nav>
         </header>

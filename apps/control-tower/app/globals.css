@@ -200,6 +200,62 @@ td {
   color: var(--signal-cyan);
 }
 
+.badge-live {
+  border-color: rgba(46, 196, 182, 0.55);
+  color: var(--signal-cyan);
+}
+
+.badge-wired {
+  border-color: rgba(243, 239, 230, 0.35);
+  color: var(--mineral-ivory);
+}
+
+.badge-shell {
+  border-color: rgba(139, 147, 167, 0.55);
+  color: var(--muted);
+}
+
+.capability-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.capability-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+}
+
+.capability-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.capability-head h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.capability-link {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: var(--signal-cyan);
+  font-size: 0.9rem;
+}
+
+.stack-meta {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+
+.stack-meta strong {
+  color: var(--mineral-ivory);
+}
+
 @media (max-width: 640px) {
   .site-header {
     flex-direction: column;
