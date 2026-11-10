@@ -1,0 +1,17 @@
+---
+description: Python, FastAPI, database, workflow and backend implementation standards.
+globs: apps/api/**/*.py, intelligence/**/*.py, executives/**/*.py, governance/**/*.py, runtime/**/*.py, integrations/**/*.py
+alwaysApply: false
+---
+# Backend Rules
+
+- Use type hints and Pydantic models at external boundaries.
+- Keep routers thin; put business logic in explicit service modules.
+- Use async only where the underlying I/O library supports it; do not mix sync and async carelessly.
+- Use SQLAlchemy and Alembic migrations; no ad-hoc production schema changes.
+- Enforce tenant scoping in repository/service methods and, where suitable, PostgreSQL row-level security as defense in depth.
+- Never let LLM-generated SQL execute against production data.
+- Represent workflow state with explicit typed schemas and durable checkpoints.
+- External tool calls require a policy decision and idempotency strategy.
+- Use structured errors, trace IDs and redacted logs. Do not log secrets, raw credentials or unnecessary PII.
+- Write unit and integration tests for authorization, state transitions and failure cases.

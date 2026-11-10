@@ -1,0 +1,16 @@
+---
+description: React, Next.js and TypeScript frontend conventions for Control Tower and agent-facing screens.
+globs: apps/control-tower/**/*.ts, apps/control-tower/**/*.tsx, apps/control-tower/**/*.css
+alwaysApply: false
+---
+# Frontend Rules
+
+- Use TypeScript strict mode and typed API contracts.
+- Treat the backend as the source of truth for identity, permissions, approval state and workflow state.
+- Never implement authorization only by hiding or disabling UI elements.
+- Keep presentation components separate from data fetching and business rules.
+- Provide loading, empty, error, retry and unauthorized states.
+- Make approval actions explicit and show the exact action/resource being approved.
+- Do not expose secrets or privileged provider credentials in browser code.
+- Meet keyboard accessibility, semantic HTML and responsive layout requirements.
+- Use the established Luxor9 visual direction: obsidian, mineral ivory and restrained signal cyan; avoid generic chatbot styling and ornamental gradients.
