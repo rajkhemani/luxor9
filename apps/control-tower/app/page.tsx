@@ -12,7 +12,11 @@ export default async function OverviewPage() {
         <p className="muted">Control intelligence. Govern execution.</p>
         <div className="panel">
           <p>API unreachable. Start the API on port 8000, then refresh.</p>
-          <p className="muted">`make api-dev` then reload this page.</p>
+          <p className="muted">
+            Live surfaces still browseable:{" "}
+            <Link href="/stack">Luxor Stack</Link>,{" "}
+            <Link href="/command">Command Bridge</Link>.
+          </p>
         </div>
       </section>
     );
@@ -25,8 +29,13 @@ export default async function OverviewPage() {
         For Real-Estate Developers — chat a brief, approve a blueprint, run governed CMO agents.
       </p>
       <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem", flexWrap: "wrap" }}>
-        <Link href="/copilot">
-          <button type="button">Open Copilot</button>
+        <Link href="/command">
+          <button type="button">Command Bridge</button>
+        </Link>
+        <Link href="/stack">
+          <button type="button" className="secondary">
+            Luxor Stack
+          </button>
         </Link>
         <Link href="/chat">
           <button type="button" className="secondary">
@@ -61,7 +70,7 @@ export default async function OverviewPage() {
         <h2>Recent workflows</h2>
         {data.recent_workflows.length === 0 ? (
           <p className="muted">
-            No runs yet. Open Chat and paste a Dubai launch brief — or call{" "}
+            No runs yet. Open Chat or Command Bridge with a Dubai launch brief — or call{" "}
             <code>POST /api/v1/demo/run</code> for a one-click pitch demo.
           </p>
         ) : (

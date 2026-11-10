@@ -76,7 +76,9 @@ sync-check:
 	@test -f apps/api/app/intelligence/agui_cmo.py
 	@test -f apps/api/app/routers/agui.py
 	@test -f 'apps/control-tower/app/api/copilotkit/[[...slug]]/route.ts'
-	@test -f apps/control-tower/app/copilot/page.tsx
+	@test -f apps/control-tower/app/command/page.tsx
+	@test -f apps/control-tower/app/stack/page.tsx
+	@test -f apps/control-tower/lib/luxor-brand.ts
 	@test -f apps/mobile/pubspec.yaml
 	@test -f infrastructure/docker-compose.yml
 	@test -f infrastructure/Dockerfile.api
@@ -85,7 +87,7 @@ sync-check:
 	@test -f docs/INFRASTRUCTURE.md
 	@test -f docs/adr/0005-copilotkit-openbot-openduet-stack.md
 	@test -f docs/adr/0006-three-bucket-agent-stack.md
-	@echo "infra sync-check OK — buckets 1+2 wired; API / Tower / Copilot / Mobile / Compose / Render"
+	@echo "infra sync-check OK — buckets 1+2 + Luxor Stack hub; API / Tower / Command Bridge / Mobile / Compose / Render"
 
 verify: sync-check api-test ui-typecheck
 

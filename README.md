@@ -14,23 +14,23 @@ Chat / Copilot → blueprint approve/decline → hierarchical agents (Orchestrat
 
 ```text
 apps/api/                 FastAPI — Trust, workflows, CMO graph, AG-UI /api/v1/agui/cmo
-apps/control-tower/       Next.js — Tower + CopilotKit (/copilot) + classic chat
+apps/control-tower/       Next.js — Tower + Command Bridge (/command) + Luxor Stack
 apps/mobile/              Flutter iOS/Android mirror
 infrastructure/           Compose + Dockerfiles (API + UI + Postgres)
 docs/                     PRD, ADRs, INFRASTRUCTURE, GTM, mobile
 render.yaml               Pilot deploy (API + Tower + DB)
 ```
 
-See [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) for the synced plane diagram and env matrix.
+See [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) and [docs/architecture/LUXOR_STACK.md](docs/architecture/LUXOR_STACK.md).
 
-**Three buckets:** LangGraph = orchestration (1) · AG-UI/CopilotKit = connectivity (2) · CopilotKit Intelligence = production learning (3, Phase 2). They compose — see [ADR-0006](docs/adr/0006-three-bucket-agent-stack.md).
+**Three buckets:** Orchestrator Graph (1) · Luxor Kit connectivity (2) · Luxor Intelligence learning (3, Phase 2). They compose — see [ADR-0006](docs/adr/0006-three-bucket-agent-stack.md).
 
 ## Quick start (run planes in parallel)
 
 ```bash
 make compose-up                 # Postgres
 make api-install && make api-dev
-make ui-install && make ui-dev  # other terminal — http://localhost:3000/copilot
+make ui-install && make ui-dev  # other terminal — http://localhost:3000/command
 # Mobile (Mac for iPhone): see docs/MOBILE.md
 make demo-run                   # pitch seed
 make sync-check                 # assert planes are wired
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env` for Clerk later. Never commit secrets.
 ## GTM / deploy
 
 - Pitch: [docs/GTM_RUNBOOK.md](docs/GTM_RUNBOOK.md)
-- CopilotKit / OpenBot path: [docs/adr/0005-copilotkit-openbot-openduet-stack.md](docs/adr/0005-copilotkit-openbot-openduet-stack.md)
+- Luxor Kit / Coworker Hub mapping: [docs/adr/0005-copilotkit-openbot-openduet-stack.md](docs/adr/0005-copilotkit-openbot-openduet-stack.md)
 - Mobile: [docs/MOBILE.md](docs/MOBILE.md)
 - Docker: `make compose-prod`
 - Render: [render.yaml](render.yaml)

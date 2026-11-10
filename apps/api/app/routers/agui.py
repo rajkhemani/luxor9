@@ -1,4 +1,4 @@
-"""Mount AG-UI CMO agent — CopilotKit bucket-2 connectivity.
+"""Mount AG-UI CMO agent — Luxor Kit connectivity (bucket 2).
 
 AG-UI standardizes: live stream, mid-run steer/HITL, reconnect/resume,
 recursive tool/sub-agent visibility, and mixed structured + unstructured payloads.
@@ -23,7 +23,7 @@ _CONNECTIVITY = {
     },
     "orchestration_bucket": 1,
     "learning_bucket": 3,
-    "learning_status": "phase2_copilotkit_intelligence",
+    "learning_status": "phase2_luxor_intelligence",
 }
 
 
@@ -58,9 +58,9 @@ def mount_agui(app: FastAPI) -> None:
             "enabled": True,
             "agents": [{"name": "luxor9_cmo", "path": "/api/v1/agui/cmo"}],
             "connectivity": _CONNECTIVITY,
-            "openbot": "Register this AG-UI URL as a Bot endpoint (bucket-2 shell)",
-            "openduet": "Same Bot — proactive skin optional later",
-            "intelligence": "Bucket 3 — CopilotKit Intelligence, Phase 2",
+            "coworker_hub": "Register this AG-UI URL as a Coworker Hub bot (bucket-2 shell)",
+            "duo_skin": "Same bot — Duo Skin proactive layout optional later",
+            "intelligence": "Bucket 3 — Luxor Intelligence, Phase 2",
         }
 
     app.include_router(router)
