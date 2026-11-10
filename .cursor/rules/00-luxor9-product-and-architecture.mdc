@@ -1,0 +1,17 @@
+---
+description: Always apply LUXOR9 product identity, architecture boundaries, security invariants and implementation priorities.
+alwaysApply: true
+---
+# LUXOR9 Core Rules
+
+- Build one Enterprise AI Operating System, not three disconnected apps.
+- Product pillars: Control Tower (command/governance), Intelligence Engine (reasoning/orchestration), AI Executive Workforce (specialist capabilities).
+- First vertical: Dubai real-estate developer. First specialist: CMO. First proof: evidence-backed market-to-launch workflow.
+- Human authority remains in control of consequential business actions.
+- Trust Engine authorization is enforced server-side immediately before side effects. UI state or model text is never authorization.
+- PostgreSQL is the system of record. Use tenant-scoped data access everywhere.
+- Evidence must preserve source, timestamps, provenance, claim association and verification status.
+- Prefer a modular monolith and one end-to-end vertical slice. No premature microservices or speculative executives.
+- Keep LangGraph, Deep Agents, HERMES, CopilotKit and model providers behind stable interfaces. Avoid duplicated orchestration.
+- Use synthetic data in development. Never commit credentials or customer data.
+- Follow TDD and verify before claiming completion. Read `AGENTS.md`, `docs/PRD.md` and `docs/TECHNICAL_BLUEPRINT.md` as relevant.

@@ -1,0 +1,14 @@
+---
+description: Testing, security, privacy and release verification requirements.
+globs: **/*test*, **/tests/**, **/specs/**
+alwaysApply: false
+---
+# Testing and Security Rules
+
+- Follow RED-GREEN-REFACTOR. Do not write implementation first for behavior-changing work.
+- Test tenant isolation, cross-tenant denial, least privilege, expired/revoked approvals, replayed requests and duplicate execution.
+- Test model and tool outputs as untrusted inputs, including prompt injection attempts.
+- Test failure recovery and idempotency around external side effects.
+- Never remove or weaken a test to obtain a passing build without an explicit, documented reason.
+- State exactly which checks ran. Do not say "all tests pass" unless the full relevant suite actually ran.
+- Before release, run dependency/security checks, migrations against a clean database, tests and a manual approval-flow review.
