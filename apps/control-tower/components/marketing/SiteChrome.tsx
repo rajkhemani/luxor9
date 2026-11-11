@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { client } from "@/lib/api";
+import { errorMessageFromUnknown, isAuthFailureMessage } from "@/lib/api-errors";
 
-type HealthState = "unknown" | "up" | "cold" | "down";
+type HealthState = "unknown" | "up" | "cold" | "gated" | "down";
 
 export function SiteChrome() {
   const [health, setHealth] = useState<HealthState>("unknown");
@@ -17,8 +18,10 @@ export function SiteChrome() {
         const body = await client.health();
         if (cancelled) return;
         setHealth(body.status === "ok" || body.status === "healthy" ? "up" : "cold");
-      } catch {
-        if (!cancelled) setHealth("down");
+      } catch (err) {
+        if (cancelled) return;
+        const why = errorMessageFromUnknown(err);
+        setHealth(isAuthFailureMessage(why) ? "gated" : "down");
       }
     };
     void tick();

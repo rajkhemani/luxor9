@@ -66,7 +66,10 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 export const client = {
   health: async (): Promise<{ status: string }> => {
     const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+    }
     return res.json() as Promise<{ status: string }>;
   },
   aguiStatus: () => api<AguiStatus>("/api/v1/agui/status"),

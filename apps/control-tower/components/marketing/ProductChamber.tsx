@@ -5,12 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 import { PRODUCT_SURFACES } from "@/lib/marketing-copy";
 import { client, type AguiStatus, type OverviewData } from "@/lib/api";
+import { errorMessageFromUnknown, isAuthFailureMessage } from "@/lib/api-errors";
 
 export function ProductChamber() {
   const [tab, setTab] = useState<(typeof PRODUCT_SURFACES)[number]["id"]>("tower");
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [agui, setAgui] = useState<AguiStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [aguiError, setAguiError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,38 +24,32 @@ export function ProductChamber() {
       ]);
       if (cancelled) return;
 
-      const ov = ovResult.status === "fulfilled" ? ovResult.value : null;
-      const st = stResult.status === "fulfilled" ? stResult.value : null;
-      setOverview(ov);
-      setAgui(st);
-
-      if (ov) {
-        setError(null);
-        return;
-      }
-
-      const ovWhy =
-        ovResult.status === "rejected"
-          ? ovResult.reason instanceof Error
-            ? ovResult.reason.message
-            : String(ovResult.reason)
-          : "";
-      const lower = ovWhy.toLowerCase();
-      if (
-        lower.includes("401") ||
-        lower.includes("403") ||
-        lower.includes("unauthorized") ||
-        lower.includes("missing bearer") ||
-        lower.includes("bearer token") ||
-        lower.includes("demo auth is disabled") ||
-        lower.includes("authentication")
-      ) {
-        setError("Live Tower metrics require a signed-in session.");
-      } else if (!ov && !st) {
-        setError("API warming or unreachable");
+      if (ovResult.status === "fulfilled") {
+        setOverview(ovResult.value);
+        setOverviewError(null);
       } else {
-        setError("Overview unavailable — Command / Stack panels may still respond.");
+        setOverview(null);
+        const why = errorMessageFromUnknown(ovResult.reason);
+        setOverviewError(
+          isAuthFailureMessage(why)
+            ? "Live Tower metrics require a signed-in session."
+            : why || "Overview unavailable",
+        );
       }
+
+      if (stResult.status === "fulfilled") {
+        setAgui(stResult.value);
+        setAguiError(null);
+      } else {
+        setAgui(null);
+        const why = errorMessageFromUnknown(stResult.reason);
+        setAguiError(
+          isAuthFailureMessage(why)
+            ? "AG-UI status requires a signed-in session."
+            : why || "AG-UI status unavailable",
+        );
+      }
+      setLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -114,14 +111,24 @@ export function ProductChamber() {
               </div>
             </div>
           ) : (
-            <p className="muted">{error ?? "Contacting Intelligence API…"}</p>
+            <p className="muted">
+              {loaded
+                ? overviewError ?? "Overview unavailable"
+                : "Contacting Intelligence API…"}
+            </p>
           )
         ) : null}
         {tab === "command" ? (
           <p className="muted">
             Orchestrator AG-UI:{" "}
             <strong>
-              {agui ? (agui.enabled ? "connected" : "disabled") : error ?? "checking…"}
+              {agui
+                ? agui.enabled
+                  ? "connected"
+                  : "disabled"
+                : loaded
+                  ? aguiError ?? "unavailable"
+                  : "checking…"}
             </strong>
             {agui?.agents?.length
               ? ` · Agents: ${agui.agents.map((a) => a.name).join(", ")}`
@@ -137,7 +144,10 @@ export function ProductChamber() {
         {tab === "api" ? (
           <pre className="api-snippet">
             {JSON.stringify(
-              overview ?? agui ?? { status: error ?? "warming" },
+              {
+                overview: overview ?? { error: overviewError ?? (loaded ? "unavailable" : "loading") },
+                agui: agui ?? { error: aguiError ?? (loaded ? "unavailable" : "loading") },
+              },
               null,
               2,
             )}

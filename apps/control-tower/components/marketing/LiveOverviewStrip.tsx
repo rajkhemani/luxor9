@@ -3,21 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { client, type AguiStatus, type OverviewData } from "@/lib/api";
+import { isAuthFailureMessage } from "@/lib/api-errors";
 
 type StripState = "loading" | "live" | "cold" | "gated" | "down";
 
 function classifyOverviewError(why: string): { state: StripState; message: string } {
   const lower = why.toLowerCase();
-  if (
-    lower.includes("401") ||
-    lower.includes("403") ||
-    lower.includes("unauthorized") ||
-    lower.includes("demo auth is disabled") ||
-    lower.includes("not authenticated") ||
-    lower.includes("missing bearer") ||
-    lower.includes("bearer token") ||
-    lower.includes("authentication")
-  ) {
+  if (isAuthFailureMessage(why)) {
     return {
       state: "gated",
       message: "Live metrics require a Tower session — open Control Tower after sign-in.",
@@ -86,7 +78,13 @@ export function LiveOverviewStrip() {
         <p className="muted" aria-live="polite">
           <span
             className={`mkt-health-pip is-${
-              state === "live" ? "up" : state === "down" ? "down" : state === "gated" ? "cold" : "cold"
+              state === "live"
+                ? "up"
+                : state === "down"
+                  ? "down"
+                  : state === "gated"
+                    ? "gated"
+                    : "cold"
             }`}
           />{" "}
           {message}
