@@ -15,17 +15,43 @@ export function ProductChamber() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const [ov, st] = await Promise.all([
-          client.overview().catch(() => null),
-          client.aguiStatus().catch(() => null),
-        ]);
-        if (cancelled) return;
-        setOverview(ov);
-        setAgui(st);
-        if (!ov && !st) setError("API warming or unreachable");
-      } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "unreachable");
+      const [ovResult, stResult] = await Promise.allSettled([
+        client.overview(),
+        client.aguiStatus(),
+      ]);
+      if (cancelled) return;
+
+      const ov = ovResult.status === "fulfilled" ? ovResult.value : null;
+      const st = stResult.status === "fulfilled" ? stResult.value : null;
+      setOverview(ov);
+      setAgui(st);
+
+      if (ov) {
+        setError(null);
+        return;
+      }
+
+      const ovWhy =
+        ovResult.status === "rejected"
+          ? ovResult.reason instanceof Error
+            ? ovResult.reason.message
+            : String(ovResult.reason)
+          : "";
+      const lower = ovWhy.toLowerCase();
+      if (
+        lower.includes("401") ||
+        lower.includes("403") ||
+        lower.includes("unauthorized") ||
+        lower.includes("missing bearer") ||
+        lower.includes("bearer token") ||
+        lower.includes("demo auth is disabled") ||
+        lower.includes("authentication")
+      ) {
+        setError("Live Tower metrics require a signed-in session.");
+      } else if (!ov && !st) {
+        setError("API warming or unreachable");
+      } else {
+        setError("Overview unavailable — Command / Stack panels may still respond.");
       }
     })();
     return () => {

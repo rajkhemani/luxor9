@@ -6,11 +6,16 @@ import { GATE_CHECKS, THEATER_EVENTS } from "@/lib/marketing-copy";
 
 export function VerificationTheater() {
   const reduce = useReducedMotion();
-  const [step, setStep] = useState(reduce ? THEATER_EVENTS.length - 1 : -1);
-  const [playing, setPlaying] = useState(!reduce);
+  const [step, setStep] = useState(-1);
+  const [playing, setPlaying] = useState(true);
 
   useEffect(() => {
-    if (!playing || reduce) return;
+    if (reduce) {
+      setStep(THEATER_EVENTS.length - 1);
+      setPlaying(false);
+      return;
+    }
+    if (!playing) return;
     if (step >= THEATER_EVENTS.length - 1) {
       setPlaying(false);
       return;
@@ -54,8 +59,13 @@ export function VerificationTheater() {
             type="button"
             className="secondary"
             onClick={() => {
-              setStep(reduce ? THEATER_EVENTS.length - 1 : -1);
-              setPlaying(!reduce);
+              if (reduce) {
+                setStep(THEATER_EVENTS.length - 1);
+                setPlaying(false);
+                return;
+              }
+              setStep(-1);
+              setPlaying(true);
             }}
           >
             Replay proof

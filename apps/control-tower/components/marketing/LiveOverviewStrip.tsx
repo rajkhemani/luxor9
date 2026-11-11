@@ -13,7 +13,10 @@ function classifyOverviewError(why: string): { state: StripState; message: strin
     lower.includes("403") ||
     lower.includes("unauthorized") ||
     lower.includes("demo auth is disabled") ||
-    lower.includes("not authenticated")
+    lower.includes("not authenticated") ||
+    lower.includes("missing bearer") ||
+    lower.includes("bearer token") ||
+    lower.includes("authentication")
   ) {
     return {
       state: "gated",
