@@ -223,6 +223,71 @@ export const RE_BOTTLENECKS = [
   "Channel publish risk",
 ] as const;
 
+export type ReBottleneck = (typeof RE_BOTTLENECKS)[number];
+
+export const CONTEXT_BLUEPRINTS: Record<
+  ReBottleneck,
+  { title: string; steps: string[]; preset: string; brief: string }
+> = {
+  "Launch brief chaos": {
+    title: "Policy-aware launch orchestration",
+    steps: [
+      "01 Capture Dubai launch intent",
+      "02 Normalize brief into blueprint",
+      "03 Route CMO specialists",
+      "04 Record evidence pack",
+    ],
+    preset: "dubai-launch",
+    brief:
+      "Draft a Dubai residential launch brief, produce an approvable blueprint, and prepare evidence for Control Tower.",
+  },
+  "Approval latency": {
+    title: "Policy-aware approval orchestration",
+    steps: [
+      "01 Capture publish intent",
+      "02 Classify risk + approver",
+      "03 Hold at Trust gate",
+      "04 Record approval evidence",
+    ],
+    preset: "approval-latency",
+    brief:
+      "Create a launch blueprint that must pause for Trust approval before any consequential publish action.",
+  },
+  "Evidence gaps": {
+    title: "Evidence-bound research loop",
+    steps: [
+      "01 Capture research objective",
+      "02 Bind sources + claim status",
+      "03 Flag UNVERIFIED gaps",
+      "04 Record claim evidence",
+    ],
+    preset: "evidence-gaps",
+    brief:
+      "Run a Dubai market research loop that refuses unverified claims and lists evidence gaps for review.",
+  },
+  "Channel publish risk": {
+    title: "Trust-gated publish path",
+    steps: [
+      "01 Capture channel publish intent",
+      "02 Check Trust policy",
+      "03 Require human approve",
+      "04 Record publish evidence",
+    ],
+    preset: "channel-publish",
+    brief:
+      "Prepare a channel publish pack that cannot leave sandbox without Trust authorization and approval binding.",
+  },
+};
+
+export const COMMAND_PLACEHOLDERS = {
+  default: "Describe a Dubai launch brief… then reply approve to dispatch",
+  "evidence-gaps": "Run an evidence-bound Dubai research loop and list UNVERIFIED gaps…",
+  "approval-latency": "Draft a launch blueprint that must pause at Trust approval…",
+  "channel-publish": "Prepare a Trust-gated channel publish pack for review…",
+  "dubai-launch":
+    "Draft a Dubai residential launch brief, produce an approvable blueprint, and prepare evidence for Control Tower.",
+} as const;
+
 /** Flattened corpus for forbidden-term scanning. */
 export function allMarketingVisibleText(): string {
   return [
@@ -249,5 +314,7 @@ export function allMarketingVisibleText(): string {
     FINAL_CTA.secondary,
     FINAL_CTA.tertiary,
     ...RE_BOTTLENECKS,
+    ...Object.values(CONTEXT_BLUEPRINTS).flatMap((b) => [b.title, b.brief, ...b.steps]),
+    ...Object.values(COMMAND_PLACEHOLDERS),
   ].join("\n");
 }

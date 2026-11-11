@@ -17,3 +17,25 @@ export function isAuthFailureMessage(why: string): boolean {
 export function errorMessageFromUnknown(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
+
+/** Short public-safe copy — never dump raw HTML/proxy bodies onto the landing page. */
+export function publicStatusMessage(
+  why: string,
+  surface: "overview" | "agui" = "overview",
+): string {
+  if (isAuthFailureMessage(why)) {
+    return surface === "agui"
+      ? "AG-UI status requires a signed-in session."
+      : "Live Tower metrics require a signed-in session.";
+  }
+  const lower = why.toLowerCase();
+  if (lower.includes("fetch") || lower.includes("network") || lower.includes("unreachable")) {
+    return "API unreachable. Start the API or check NEXT_PUBLIC_API_BASE_URL.";
+  }
+  if (lower.includes("502") || lower.includes("503") || lower.includes("504")) {
+    return surface === "agui"
+      ? "AG-UI status temporarily unavailable."
+      : "Overview temporarily unavailable.";
+  }
+  return surface === "agui" ? "AG-UI status unavailable." : "Overview unavailable.";
+}

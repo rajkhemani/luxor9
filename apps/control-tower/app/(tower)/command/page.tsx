@@ -4,6 +4,7 @@ import { CopilotChat, CopilotKit } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { COMMAND_PLACEHOLDERS } from "@/lib/marketing-copy";
 
 const CMO_AGENT_ID = "luxor9_cmo";
 
@@ -15,16 +16,10 @@ function CommandBridgeInner() {
 
   const placeholder = useMemo(() => {
     if (brief) return brief;
-    if (preset === "evidence-gaps") {
-      return "Run an evidence-bound Dubai research loop and list UNVERIFIED gaps…";
+    if (preset && preset in COMMAND_PLACEHOLDERS) {
+      return COMMAND_PLACEHOLDERS[preset as keyof typeof COMMAND_PLACEHOLDERS];
     }
-    if (preset === "approval-latency") {
-      return "Draft a launch blueprint that must pause at Trust approval…";
-    }
-    if (preset === "channel-publish") {
-      return "Prepare a Trust-gated channel publish pack for review…";
-    }
-    return "Describe a Dubai launch brief… then reply approve to dispatch";
+    return COMMAND_PLACEHOLDERS.default;
   }, [brief, preset]);
 
   return (

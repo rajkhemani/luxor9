@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 import { PRODUCT_SURFACES } from "@/lib/marketing-copy";
 import { client, type AguiStatus, type OverviewData } from "@/lib/api";
-import { errorMessageFromUnknown, isAuthFailureMessage } from "@/lib/api-errors";
+import { errorMessageFromUnknown, publicStatusMessage } from "@/lib/api-errors";
 
 export function ProductChamber() {
   const [tab, setTab] = useState<(typeof PRODUCT_SURFACES)[number]["id"]>("tower");
@@ -29,11 +29,8 @@ export function ProductChamber() {
         setOverviewError(null);
       } else {
         setOverview(null);
-        const why = errorMessageFromUnknown(ovResult.reason);
         setOverviewError(
-          isAuthFailureMessage(why)
-            ? "Live Tower metrics require a signed-in session."
-            : why || "Overview unavailable",
+          publicStatusMessage(errorMessageFromUnknown(ovResult.reason), "overview"),
         );
       }
 
@@ -42,12 +39,7 @@ export function ProductChamber() {
         setAguiError(null);
       } else {
         setAgui(null);
-        const why = errorMessageFromUnknown(stResult.reason);
-        setAguiError(
-          isAuthFailureMessage(why)
-            ? "AG-UI status requires a signed-in session."
-            : why || "AG-UI status unavailable",
-        );
+        setAguiError(publicStatusMessage(errorMessageFromUnknown(stResult.reason), "agui"));
       }
       setLoaded(true);
     })();
