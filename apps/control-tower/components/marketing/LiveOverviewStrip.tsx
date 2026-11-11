@@ -4,7 +4,33 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { client, type AguiStatus, type OverviewData } from "@/lib/api";
 
-type StripState = "loading" | "live" | "cold" | "down";
+type StripState = "loading" | "live" | "cold" | "gated" | "down";
+
+function classifyOverviewError(why: string): { state: StripState; message: string } {
+  const lower = why.toLowerCase();
+  if (
+    lower.includes("401") ||
+    lower.includes("403") ||
+    lower.includes("unauthorized") ||
+    lower.includes("demo auth is disabled") ||
+    lower.includes("not authenticated")
+  ) {
+    return {
+      state: "gated",
+      message: "Live metrics require a Tower session — open Control Tower after sign-in.",
+    };
+  }
+  if (lower.includes("fetch") || lower.includes("network") || lower.includes("unreachable")) {
+    return {
+      state: "down",
+      message: "API unreachable. Start the API or check NEXT_PUBLIC_API_BASE_URL.",
+    };
+  }
+  return {
+    state: "cold",
+    message: "API warming — Tower remains browsable.",
+  };
+}
 
 export function LiveOverviewStrip() {
   const [state, setState] = useState<StripState>("loading");
@@ -34,16 +60,10 @@ export function LiveOverviewStrip() {
       } catch (err) {
         if (cancelled) return;
         const why = err instanceof Error ? err.message : "unreachable";
-        if (why.toLowerCase().includes("fetch") || why.toLowerCase().includes("network")) {
-          setState("down");
-          setMessage(
-            "API unreachable. Start the API or check NEXT_PUBLIC_API_BASE_URL.",
-          );
-        } else {
-          setState("cold");
-          setMessage("API warming — Tower remains browsable.");
-        }
-        delay = Math.min(delay * 2, 60_000);
+        const classified = classifyOverviewError(why);
+        setState(classified.state);
+        setMessage(classified.message);
+        delay = classified.state === "gated" ? 60_000 : Math.min(delay * 2, 60_000);
       } finally {
         if (!cancelled) timer = window.setTimeout(tick, delay);
       }
@@ -61,7 +81,11 @@ export function LiveOverviewStrip() {
       <div className="live-head">
         <h2>Live operators see numbers, not slides.</h2>
         <p className="muted" aria-live="polite">
-          <span className={`mkt-health-pip is-${state === "live" ? "up" : state === "down" ? "down" : "cold"}`} />{" "}
+          <span
+            className={`mkt-health-pip is-${
+              state === "live" ? "up" : state === "down" ? "down" : state === "gated" ? "cold" : "cold"
+            }`}
+          />{" "}
           {message}
           {agui ? ` · Orchestrator: ${agui.enabled ? "connected" : "disabled"}` : null}
         </p>
