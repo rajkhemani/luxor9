@@ -1,7 +1,7 @@
 # LUXOR9 Landing Page — Deep-Dive Implementation Brief (v3)
 
-**Status:** Ready for design + frontend engineering handoff  
-**Surface:** `apps/control-tower` marketing route — prefer `app/(marketing)/page.tsx` (new) with shared chrome; keep `/` as authenticated Control Tower overview  
+**Status:** Implementation in progress — first cut live at `/home`  
+**Surface:** `apps/control-tower` marketing route at `app/(marketing)/home/page.tsx` with shared chrome; keep `/` as Control Tower overview  
 **Doctrine line:** Control AI execution. Prove every outcome.  
 **Primary GTM:** Dubai real-estate developers (expandable to other contexts later)  
 **Brand source of truth:** `apps/control-tower/lib/luxor-brand.ts` + CSS tokens in `app/globals.css`  
@@ -36,14 +36,15 @@ For every section below, implementers get five locked specs:
 
 ```css
 :root {
-  --lx-obsidian: #0B0D10;
-  --lx-elevated: #14181F;
-  --lx-ivory: #F3EFE6;
-  --lx-cyan: #2EC4B6;
+  /* Marketing aliases (--lx-*) mirror legacy Tower tokens (--obsidian, --signal-cyan, …). Both exist in globals.css. */
+  --lx-obsidian: #0B0D10; /* = --obsidian */
+  --lx-elevated: #14181F; /* = --obsidian-elevated */
+  --lx-ivory: #F3EFE6; /* = --mineral-ivory */
+  --lx-cyan: #2EC4B6; /* = --signal-cyan */
   --lx-copper: #C4A574;
-  --lx-muted: #8B93A7;
-  --lx-danger: #D64545;
-  --lx-border: #2A3140;
+  --lx-muted: #8B93A7; /* = --muted */
+  --lx-danger: #D64545; /* = --danger */
+  --lx-border: #2A3140; /* = --border */
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   /* Engineering upgrade path: swap display → Fraunces or Instrument Serif; body → Geist or IBM Plex Sans via next/font — keep character, avoid Inter/Roboto. */
@@ -328,7 +329,7 @@ Showcase four surfaces: Control Tower, Command Bridge, Luxor Stack, API.
 | Tower | Reuse overview metrics shape from `client.overview()` |
 | Command | `/command` page + `/api/v1/agui/status` |
 | Stack | Import `LUXOR_CAPABILITIES` — single source of truth |
-| API | Display paths already in `lib/api.ts` + `health` + `agui/status` |
+| API | `lib/api.ts` now exposes `overview()`, `health()`, `aguiStatus()` (+ workflows/approvals/etc.) |
 
 ---
 
@@ -372,8 +373,9 @@ Footer disclaimer: `Demonstration record, not live production evidence.`
 
 ### 5) Stack tie-in
 
-- Demo seed: `POST /api/v1/demo/run`  
-- Live bind: evidence + claims APIs  
+- Public Theater stays on the scripted demo timeline (labeled non-production).  
+- Do **not** call `POST /api/v1/demo/run` from the public landing — that endpoint is auth-gated and mutates workflows. Operators run demos from Tower after sign-in.  
+- Live bind (authenticated only): evidence + claims APIs  
 - Trust: narrative aligns with `services/trust.py` recheck before side effects
 
 ---
@@ -455,8 +457,10 @@ import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 - States:  
   - Loading: `Contacting Intelligence API…`  
   - Cold-start: `API warming — Tower remains browsable.`  
+  - Gated (401/403 / demo-auth disabled): `Live metrics require a Tower session — open Control Tower after sign-in.`  
   - Error: `API unreachable. Start the API or check NEXT_PUBLIC_API_BASE_URL.`  
-  - Fresh: `Updated {relative time}`
+  - Fresh: `Updated {relative time}`  
+- Production note: overview is tenant-scoped. Without a session, show the gated state — never invent metrics.
 
 ### 2) Layout
 
@@ -465,7 +469,8 @@ import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 
 ### 3) Motion / real-time
 
-- Poll `client.overview()` every 15s while in viewport; exponential backoff on failure.  
+- Poll `client.overview()` every 15s while in viewport when live; slower poll when gated.  
+- Classify 401/403 as gated (not “down”). Exponential backoff on transport failures only.  
 - Number transitions: count-up on first load only; subsequent updates swap with 120ms fade.  
 - ARIA `aria-live="polite"` on status text.
 
@@ -501,7 +506,7 @@ import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 ### 3) Motion / real-time
 
 - Selection morphs blueprint steps (layout animation).  
-- Optional: calling `POST /api/v1/chat` with preset message to create a draft workflow — only if API up; else local preview.
+- Public landing uses **local blueprint preview only**. Do not mutate via chat/demo from anonymous visitors.
 
 ### 4) Responsive
 
@@ -510,7 +515,7 @@ import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 ### 5) Stack tie-in
 
 - Aligns with chat context defaults `{ location: "Dubai", product_type: "residential" }`  
-- Demo alternative: `POST /api/v1/demo/run`  
+- CTA deep-links to `/command` for authenticated operators; mutating demo seed stays inside Tower.  
 - Follow-through: `/workflows`, `/approvals`
 
 ---
@@ -657,10 +662,10 @@ import { LUXOR_CAPABILITIES, statusLabel } from "@/lib/luxor-brand";
 
 ```
 apps/control-tower/
-  app/(marketing)/layout.tsx      # SiteChrome
-  app/(marketing)/page.tsx        # composes sections
-  app/(marketing)/privacy/page.tsx
-  app/(marketing)/terms/page.tsx
+  app/(marketing)/layout.tsx      # SiteChrome + footer
+  app/(marketing)/home/page.tsx   # /home — composes sections (NOT app/(marketing)/page.tsx)
+  app/(tower)/layout.tsx          # operator chrome
+  app/(tower)/page.tsx            # / — Control Tower overview
   components/marketing/
     HeroChamber.tsx
     ProblemFracture.tsx
@@ -669,21 +674,20 @@ apps/control-tower/
     ProductChamber.tsx
     VerificationTheater.tsx
     StackConstellation.tsx
-    SignalRoute3D.tsx
+    SignalRouteDiagram.tsx
     LiveOverviewStrip.tsx
     ContextBlueprint.tsx
     ProofAndTrust.tsx
     FaqPrecision.tsx
     FinalCta.tsx
     SiteFooter.tsx
-    marketing-store.ts            # routeProgress, apiPulse
+    marketing-store.tsx
   lib/luxor-brand.ts              # DO NOT duplicate capability copy
-  lib/api.ts                      # extend with health if needed
+  lib/api.ts                      # health + aguiStatus + overview
+  lib/marketing-copy.ts           # scanned by forbidden-term tests
 ```
 
-**Routing note:** Keep operator overview at `/` *or* move overview to `/tower` and make `/` marketing — product decision. Brief assumes marketing at `/` **or** `/home` with redirect; implementers must not break existing deep links without a migration note in the PR.
-
-**Recommended decision for merge safety:** ship marketing at `/home` (or `(marketing)/page` mapped to `/home`) first; promote to `/` after Tower moves to `/tower`. Document in PR.
+**Routing note:** Marketing must live at `/home` via `app/(marketing)/home/page.tsx`. Do **not** put `page.tsx` directly under `(marketing)/` — that would collide with Tower overview at `/`. Promote marketing to `/` only after overview moves to `/tower`.
 
 ### Dependencies
 
@@ -696,10 +700,10 @@ apps/control-tower/
 | Signal | Endpoint | Cadence | UI consumer |
 |--------|----------|---------|-------------|
 | Health | `GET /health` | 30s | Nav pip, Live strip |
-| Overview | `GET /api/v1/overview` | 15s in view | LiveOverviewStrip, Product Tower panel |
+| Overview | `GET /api/v1/overview` | 15s when authorized | LiveOverviewStrip, Product Tower panel (gated publicly) |
 | AG-UI | `GET /api/v1/agui/status` | on mount + 60s | Stack, Command panel |
-| Demo | `POST /api/v1/demo/run` | user action | ContextBlueprint, Theater advanced |
-| Evidence | `GET /api/v1/workflows/:id/evidence` | user/workflow | Theater bind, Proof |
+| Demo seed | `POST /api/v1/demo/run` | Tower operators only | Not called from public `/home` |
+| Evidence | `GET /api/v1/workflows/:id/evidence` | authenticated workflow | Theater advanced bind, Proof |
 
 ### SEO / share
 
