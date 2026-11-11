@@ -31,7 +31,13 @@ function Chamber() {
     }
   });
 
-  const lit = Math.floor((store?.routeProgress ?? 0.15) * 6);
+  // Match AccountableRoute selection: progress 0..1 across 6 states → light 1..6 nodes.
+  const lit = store?.routeBroken
+    ? -1
+    : Math.min(
+        5,
+        Math.max(0, Math.round((store?.routeProgress ?? 0) * 5)),
+      );
 
   return (
     <group ref={group} position={[0.4, 0.1, 0]}>

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { HERO_COPY } from "@/lib/marketing-copy";
 
 const HeroScene = dynamic(
@@ -15,6 +16,17 @@ const HeroScene = dynamic(
 
 export function HeroChamber() {
   const reduce = useReducedMotion();
+  const [wide, setWide] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const showScene = !reduce && wide;
 
   const item = (delay: number) =>
     reduce
@@ -27,7 +39,7 @@ export function HeroChamber() {
 
   return (
     <section className="hero-chamber" id="hero-chamber" aria-label="LUXOR9 hero">
-      {reduce ? <div className="hero-scene hero-scene-fallback" aria-hidden /> : <HeroScene />}
+      {showScene ? <HeroScene /> : <div className="hero-scene hero-scene-fallback" aria-hidden />}
       <div className="hero-copy">
         <motion.p className="hero-brand brand" {...item(0.12)}>
           LUXOR<span>9</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LUXOR_CAPABILITIES,
   statusLabel,
@@ -26,7 +26,13 @@ export function StackConstellation() {
     [filter],
   );
 
-  const active = LUXOR_CAPABILITIES.find((c) => c.id === selected) ?? items[0];
+  useEffect(() => {
+    if (!items.some((c) => c.id === selected)) {
+      setSelected(items[0]?.id ?? "");
+    }
+  }, [items, selected]);
+
+  const active = items.find((c) => c.id === selected) ?? items[0];
 
   return (
     <section className="mkt-section stack-constellation" id="stack-constellation">

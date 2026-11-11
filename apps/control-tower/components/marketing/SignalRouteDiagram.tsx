@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Mesh } from "three";
 import { useReducedMotion } from "framer-motion";
 
@@ -11,7 +11,7 @@ function Rings() {
   const token = useRef<Mesh>(null);
   const radii = useMemo(() => [0.7, 1.05, 1.4, 1.75, 2.1, 2.45], []);
 
-  useFrame(({ clock, pointer }) => {
+  useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     if (token.current) {
       const r = 1.75;
@@ -19,8 +19,6 @@ function Rings() {
       token.current.position.z = Math.sin(t * 0.7) * r;
       token.current.position.y = Math.sin(t * 1.4) * 0.15;
     }
-    // subtle pointer tilt applied on parent via group in JSX below via ref callback pattern — keep simple
-    void pointer;
   });
 
   return (
@@ -45,8 +43,23 @@ function Rings() {
   );
 }
 
-export function SignalRouteDiagram() {
+function usePreferCanvas(): boolean {
   const reduce = useReducedMotion();
+  const [wide, setWide] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return !reduce && wide;
+}
+
+export function SignalRouteDiagram() {
+  const showCanvas = usePreferCanvas();
   return (
     <section className="mkt-section signal-route" id="signal-route-3d">
       <h2>Control across the systems you already run.</h2>
@@ -54,9 +67,7 @@ export function SignalRouteDiagram() {
         Context, agents, tools, policy, verification, and evidence — one governable path.
       </p>
       <div className="signal-frame">
-        {reduce ? (
-          <div className="signal-fallback" aria-hidden />
-        ) : (
+        {showCanvas ? (
           <Canvas
             className="signal-canvas"
             dpr={[1, 1.4]}
@@ -67,6 +78,8 @@ export function SignalRouteDiagram() {
             <directionalLight position={[2, 4, 3]} intensity={1} />
             <Rings />
           </Canvas>
+        ) : (
+          <div className="signal-fallback" aria-hidden />
         )}
         <ul className="signal-labels">
           {LAYERS.map((label) => (

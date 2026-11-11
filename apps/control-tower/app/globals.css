@@ -475,6 +475,17 @@ td {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.5rem;
   margin: 2rem 0 1.25rem;
+  list-style: none;
+  padding: 0;
+}
+
+.route-track li {
+  margin: 0;
+  min-width: 0;
+}
+
+.route-track .route-node {
+  width: 100%;
 }
 
 .route-node {

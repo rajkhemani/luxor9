@@ -15,7 +15,10 @@ export function AccountableRoute() {
   } = useMarketingStore();
 
   useEffect(() => {
-    setRouteProgress(routeBroken ? 0 : (activeRouteIndex + 1) / ROUTE_STATES.length);
+    // Progress 0..1 maps to selected index so hero lights exactly the reached nodes.
+    setRouteProgress(
+      routeBroken ? 0 : activeRouteIndex / Math.max(1, ROUTE_STATES.length - 1),
+    );
   }, [activeRouteIndex, routeBroken, setRouteProgress]);
 
   const active = ROUTE_STATES[activeRouteIndex];
@@ -28,27 +31,27 @@ export function AccountableRoute() {
         Each output becomes the next input — until evidence is recorded.
       </p>
 
-      <div className="route-track" role="list">
+      <ul className="route-track">
         {ROUTE_STATES.map((state, i) => {
           const on = !routeBroken && i <= activeRouteIndex;
           return (
-            <button
-              key={state.id}
-              type="button"
-              role="listitem"
-              className={`route-node${on ? " is-on" : ""}${i === activeRouteIndex ? " is-active" : ""}`}
-              onClick={() => {
-                setRouteBroken(false);
-                setActiveRouteIndex(i);
-              }}
-              aria-current={i === activeRouteIndex ? "step" : undefined}
-            >
-              <span className="route-code">{state.code}</span>
-              <span className="route-title">{state.title}</span>
-            </button>
+            <li key={state.id}>
+              <button
+                type="button"
+                className={`route-node${on ? " is-on" : ""}${i === activeRouteIndex ? " is-active" : ""}`}
+                onClick={() => {
+                  setRouteBroken(false);
+                  setActiveRouteIndex(i);
+                }}
+                aria-current={i === activeRouteIndex ? "step" : undefined}
+              >
+                <span className="route-code">{state.code}</span>
+                <span className="route-title">{state.title}</span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       <div className="route-detail">
         <h3>

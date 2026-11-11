@@ -4,29 +4,66 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { RE_BOTTLENECKS } from "@/lib/marketing-copy";
 
-const STEPS = [
-  "01 Capture intent",
-  "02 Classify risk",
-  "03 Route authority",
-  "04 Record evidence",
-] as const;
+type Bottleneck = (typeof RE_BOTTLENECKS)[number];
+
+const BLUEPRINTS: Record<
+  Bottleneck,
+  { title: string; steps: string[]; preset: string; brief: string }
+> = {
+  "Launch brief chaos": {
+    title: "Policy-aware launch orchestration",
+    steps: [
+      "01 Capture Dubai launch intent",
+      "02 Normalize brief into blueprint",
+      "03 Route CMO specialists",
+      "04 Record evidence pack",
+    ],
+    preset: "dubai-launch",
+    brief:
+      "Draft a Dubai residential launch brief, produce an approvable blueprint, and prepare evidence for Control Tower.",
+  },
+  "Approval latency": {
+    title: "Policy-aware approval orchestration",
+    steps: [
+      "01 Capture publish intent",
+      "02 Classify risk + approver",
+      "03 Hold at Trust gate",
+      "04 Record approval evidence",
+    ],
+    preset: "approval-latency",
+    brief:
+      "Create a launch blueprint that must pause for Trust approval before any consequential publish action.",
+  },
+  "Evidence gaps": {
+    title: "Evidence-bound research loop",
+    steps: [
+      "01 Capture research objective",
+      "02 Bind sources + claim status",
+      "03 Flag UNVERIFIED gaps",
+      "04 Record claim evidence",
+    ],
+    preset: "evidence-gaps",
+    brief:
+      "Run a Dubai market research loop that refuses unverified claims and lists evidence gaps for review.",
+  },
+  "Channel publish risk": {
+    title: "Trust-gated publish path",
+    steps: [
+      "01 Capture channel publish intent",
+      "02 Check Trust policy",
+      "03 Require human approve",
+      "04 Record publish evidence",
+    ],
+    preset: "channel-publish",
+    brief:
+      "Prepare a channel publish pack that cannot leave sandbox without Trust authorization and approval binding.",
+  },
+};
 
 export function ContextBlueprint() {
-  const [bottleneck, setBottleneck] =
-    useState<(typeof RE_BOTTLENECKS)[number]>("Launch brief chaos");
-
-  const title = useMemo(() => {
-    switch (bottleneck) {
-      case "Approval latency":
-        return "Policy-aware approval orchestration";
-      case "Evidence gaps":
-        return "Evidence-bound research loop";
-      case "Channel publish risk":
-        return "Trust-gated publish path";
-      default:
-        return "Policy-aware launch orchestration";
-    }
-  }, [bottleneck]);
+  const [bottleneck, setBottleneck] = useState<Bottleneck>("Launch brief chaos");
+  const plan = useMemo(() => BLUEPRINTS[bottleneck], [bottleneck]);
+  const href = `/command?preset=${encodeURIComponent(plan.preset)}&bottleneck=${encodeURIComponent(bottleneck)}&brief=${encodeURIComponent(plan.brief)}`;
 
   return (
     <section className="mkt-section context-blueprint" id="context-blueprint">
@@ -60,14 +97,14 @@ export function ContextBlueprint() {
         </div>
         <div className="blueprint-preview">
           <p className="mkt-eyebrow">Your execution blueprint · Draft / Real Estate</p>
-          <h3>{title}</h3>
+          <h3>{plan.title}</h3>
           <ol>
-            {STEPS.map((s) => (
+            {plan.steps.map((s) => (
               <li key={s}>{s}</li>
             ))}
           </ol>
           <p className="muted">Default context: Dubai · residential</p>
-          <Link href="/command?preset=dubai-launch">
+          <Link href={href}>
             <button type="button">Run this brief in Command Bridge</button>
           </Link>
         </div>
