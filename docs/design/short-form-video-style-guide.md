@@ -21,7 +21,7 @@ This guide locks how Luxor9 appears in short-form video: one lifecycle language,
 |------|------|
 | Brand only | On-screen and spoken brand is **LUXOR9** (or Luxor9). No partner co-brands, no agency names, no “powered by” third parties. |
 | Evidence honesty | Never invent customers, case studies, ROI, time-saved claims, or volume metrics. Label illustrative figures as **example**. Cite when a number is sourced. |
-| Sourced benchmark | ICAI estimates **3–8 hours per client per month** for GSTR-2B reconciliation. Use that range only with clear attribution; do not extrapolate firm-wide savings. |
+| Sourced benchmark | **3–8 hours per client per month** for mid-sized GSTR-2B reconciliation is attributed to CA Meet Dhrangadhariya’s GSTAuditSuite use case hosted on the ICAI AI portal ([usecases_details.php?id=209](https://ai.icai.org/usecases_details.php?id=209))—an author use case, **not** an ICAI-wide institutional estimate. Cite the author and host page; do not say “ICAI estimates”; do not extrapolate firm-wide or Luxor9 savings. |
 | Tone | Premium, institutional, confident. Calm authority. Short sentences. Prefer control and proof verbs over hype. |
 | Visual system | Full-bleed or edge-to-edge frames on **obsidian** (`#0B0D10`) with **mineral ivory** (`#F3EFE6`) type and **signal cyan** (`#2EC4B6`) as a restrained accent—never purple stacks, emoji, sticker badges, or multi-layer glow. |
 | Motion budget | One primary effect per lifecycle beat. No effect stacks in a single shot. Prefer decisive cuts over continuous noise. |
@@ -90,9 +90,9 @@ Every reel ends on the same locked end card (last 2.0–2.5 seconds).
 
 ## 6. Wedge context — CA GST exception desk (proposed)
 
-**Problem shape (honest):** Monthly GSTR-2B reconciliation is labour-intensive for CA practices. ICAI estimates **3–8 hours per client per month** for GSTR-2B reconciliation (sourced). Luxor9 is positioned as a governed **exception desk**: surface mismatches, structure review, require human authority for consequential actions, attach evidence, and feed outcomes back into the loop.
+**Problem shape (honest):** Monthly GSTR-2B reconciliation is labour-intensive for CA practices. A published use case on the ICAI AI portal (CA Meet Dhrangadhariya, GSTAuditSuite) states manual reconciliation takes **3–8 hours per client per month** for mid-sized businesses ([source](https://ai.icai.org/usecases_details.php?id=209)). Luxor9 is positioned as a governed **exception desk**: surface mismatches, structure review, require human authority for consequential actions, attach evidence, and feed outcomes back into the loop.
 
-**Do not claim:** automatic filing, guaranteed ITC recovery, named firm results, or hours saved beyond the sourced ICAI range used as context—not as Luxor9 performance.
+**Do not claim:** automatic filing, guaranteed ITC recovery, named firm results, “ICAI estimates …”, or hours saved beyond that author-attributed range used as context—not as Luxor9 performance.
 
 ---
 
@@ -120,7 +120,7 @@ Every reel ends on the same locked end card (last 2.0–2.5 seconds).
 | 6 | 21.5–24s | Signature closer | — | Wordmark + doctrine | *(no VO; signature cadence)* |
 
 **Caption / description (paste-ready):**  
-GSTR-2B reconciliation: ICAI estimates 3–8 hours per client per month (sourced). Luxor9 proposes a governed GST exception desk—review, authorize, prove, learn. No invented results.
+GSTR-2B reconciliation can take 3–8 hours per client per month for mid-sized businesses (CA Meet Dhrangadhariya, GSTAuditSuite use case on the ICAI AI portal). Luxor9 proposes a governed GST exception desk—review, authorize, prove, learn. No invented results.
 
 ---
 
@@ -166,7 +166,7 @@ From mismatch to governed proof. Luxor9 exception desk: know the signal, think i
 |---|------|------|---------------|----------------|-----|
 | 1 | 0–2s | Opaque dashboard (no trail) → flash into inspectable exception desk list | KNOW / flash cut | `Not a black box.` | “GST exceptions should not live in a black box.” |
 | 2 | 2–7s | Match cut from list row → plan / checklist of review steps | THINK / match cut | `Inspectable path.` | “Luxor9 makes the path inspectable—from intake to disposition.” |
-| 3 | 7–12s | Approval binding UI (tenant, principal, action, expiry—conceptual labels); B&W → color on confirm | ACT / B&W → color | `Bound approval.` | “Approvals bind to the exact action. Material changes invalidate them.” |
+| 3 | 7–12s | Approval binding UI showing full contract labels: tenant, principal, workflow, exact action/resource, policy version, expiry (synthetic demo); B&W → color on confirm | ACT / B&W → color | `Bound approval.` | “Approvals bind to tenant, principal, workflow, exact action and resource, policy version, and expiry. Material changes invalidate them.” |
 | 4 | 12–17s | X-ray of audit / evidence ledger strip; row ID `LX9/EVT/######` (synthetic demo—never a live production ID) | PROVE / X-ray | `Ledger, not lore.` | “What ran, what was proven, what remains unverified—on the ledger.” |
 | 5 | 17–19.5s | Soft cyan/ivory leak as desk returns to calm idle | LEARN / light leak | `Operate with control.` | “Operate with control. Improve each cycle.” |
 | 6 | 19.5–22s | Signature closer | — | Wordmark + doctrine | *(no VO; signature cadence)* |
@@ -183,16 +183,18 @@ Exception desk, not a black box. Luxor9: human authority before consequential GS
 - “Governed exception desk for GST review.”
 - “Human authority before consequential action.”
 - “Evidence with source, time, and verification status.”
-- “ICAI estimates 3–8 hours per client per month for GSTR-2B reconciliation.” *(sourced; do not turn into Luxor9 savings)*
+- “Manual GSTR-2B reconciliation: 3–8 hours per client per month for mid-sized businesses (CA Meet Dhrangadhariya, GSTAuditSuite use case on the ICAI AI portal).” *(author-attributed; do not say “ICAI estimates”; do not turn into Luxor9 savings)*
 - “Queue: twelve open mismatches (example).”
 
 **Forbidden**
 
 - Named customers or “leading CA firm in …” without a real, approved case.
-- “Save 3–8 hours with Luxor9” (misuses the ICAI estimate as product performance).
+- “ICAI estimates 3–8 hours…” (misattributes an author use case as an ICAI-wide estimate).
+- “Save 3–8 hours with Luxor9” (misuses the sourced range as product performance).
 - AG Associates or any non-Luxor9 firm branding.
 - Guaranteed ITC, filing automation claims, or invented accuracy percentages.
 - Meme audio, parody CA stereotypes, emoji end cards.
+- Approval UI that shows a partial binding set (must include tenant, principal, workflow, exact action/resource, policy version, expiry when the shot is about bound approval).
 
 ---
 
@@ -202,11 +204,13 @@ Exception desk, not a black box. Luxor9: human authority before consequential GS
 - [ ] Hook lands by 2.0s with one clear line  
 - [ ] Each used lifecycle beat maps to its locked effect and sound cue  
 - [ ] No stacked effects in one shot  
-- [ ] Numbers either sourced (ICAI 3–8 hrs) or labeled **example**  
+- [ ] Numbers either correctly attributed (3–8 hrs → CA Meet Dhrangadhariya / ICAI AI portal use case) or labeled **example**  
+- [ ] Never phrase the hours figure as “ICAI estimates”  
+- [ ] Bound-approval shots show the full field set (tenant, principal, workflow, action/resource, policy version, expiry)  
 - [ ] Luxor9-only branding; no AG Associates / partner marks  
 - [ ] VO ends before signature closer cadence  
 - [ ] Closer: obsidian + wordmark + doctrine + two-note cadence  
-- [ ] Caption includes honesty line when ICAI figure is used  
+- [ ] Caption names the author + host page when the hours figure is used  
 
 ---
 
