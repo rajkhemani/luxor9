@@ -115,7 +115,7 @@ Every reel ends on the same locked end card (last 2.0–2.5 seconds).
 | 1 | 0–2s | Portal mismatch grid, hard into frame | KNOW / flash cut | `GSTR-2B still eats the month.` | “GSTR-2B reconciliation still consumes practice hours.” |
 | 2 | 2–7s | Same grid → match-cut into Luxor9 exception queue (synthetic demo UI) | THINK / match cut | `Exceptions, not noise.` | “Luxor9 opens a governed exception desk—mismatches structured for review.” |
 | 3 | 7–13s | Human taps Approve on a single exception; frame moves B&W → color | ACT / B&W → color | `Human authority. Then action.` | “Consequential steps wait on human authority—then the system proceeds under policy.” |
-| 4 | 13–18s | X-ray peel: source doc, timestamp, claim link, verification state | PROVE / X-ray | `Evidence stays attached.` | “Every decision keeps source, time, and verification status.” |
+| 4 | 13–18s | X-ray peel: source doc, timestamp, claim link, verification state; evidence ID shown as `LX9/EVT/######` (synthetic demo—never a live production ID) | PROVE / X-ray | `Evidence stays attached.` | “Every decision keeps source, time, and verification status.” |
 | 5 | 18–21.5s | Queue updates; restrained edge glow as “learned” status returns to desk | LEARN / light leak | `The desk gets sharper.` | “Outcomes return to the loop—so the next period starts cleaner.” |
 | 6 | 21.5–24s | Signature closer | — | Wordmark + doctrine | *(no VO; signature cadence)* |
 
@@ -141,8 +141,8 @@ GSTR-2B reconciliation: ICAI estimates 3–8 hours per client per month (sourced
 | 1 | 0–2s | Invoice line vs ledger diverge; ivory flash into framed exception | KNOW / flash cut | `One mismatch. Full trail.` | “One GST mismatch should leave a full trail.” |
 | 2 | 2–8s | Match cut: circled amount → exception card with fields (supplier, period, delta) | THINK / match cut | `Structured for review.` | “Luxor9 structures the exception—what broke, where, and what needs judgment.” |
 | 3 | 8–14s | Side-by-side options; principal confirms disposition; color returns | ACT / B&W → color | `Authorize the exact action.` | “You authorize the exact action. The system does not approve itself.” |
-| 4 | 14–21s | X-ray through the card: source URI/title, collection time, content hash mark, verification badge | PROVE / X-ray | `Source. Time. Status.` | “Proof is not a screenshot in a chat—it is evidence with provenance.” |
-| 5 | 21–24.5s | Light leak across the closed exception as pattern feeds the desk ruleset (conceptual, no fake % ) | LEARN / light leak | `Close the loop.` | “Close the loop. The desk learns the pattern for next month’s review.” |
+| 4 | 14–21s | X-ray through the card: source URI/title, collection time, content hash mark, verification badge; evidence ID `LX9/EVT/######` (synthetic demo—never a live production ID) | PROVE / X-ray | `Source. Time. Status.` | “Proof is not a screenshot in a chat—it is evidence with provenance.” |
+| 5 | 21–24.5s | Light leak across the closed exception as pattern feeds the desk ruleset (conceptual; no fabricated metrics) | LEARN / light leak | `Close the loop.` | “Close the loop. The desk learns the pattern for next month’s review.” |
 | 6 | 24.5–27s | Signature closer | — | Wordmark + doctrine | *(no VO; signature cadence)* |
 
 **Caption / description:**  
@@ -156,7 +156,7 @@ From mismatch to governed proof. Luxor9 exception desk: know the signal, think i
 **Tone:** Premium, calm; lightly doctrinal.
 
 **Hook (0–2s)**  
-- Visual: Blurred “AI did it” chat bubble rejected; hard cut to Control Tower–style exception list (synthetic).  
+- Visual: Blurred opaque dashboard with no visible reasoning or trail; hard cut to Control Tower–style exception list (synthetic).  
 - On-screen text: `Not a black box.`  
 - VO: “GST exceptions should not live in a black box.”
 
@@ -164,10 +164,10 @@ From mismatch to governed proof. Luxor9 exception desk: know the signal, think i
 
 | # | Time | Shot | Beat / effect | On-screen text | VO |
 |---|------|------|---------------|----------------|-----|
-| 1 | 0–2s | Reject opaque chat → flash into exception desk list | KNOW / flash cut | `Not a black box.` | “GST exceptions should not live in a black box.” |
+| 1 | 0–2s | Opaque dashboard (no trail) → flash into inspectable exception desk list | KNOW / flash cut | `Not a black box.` | “GST exceptions should not live in a black box.” |
 | 2 | 2–7s | Match cut from list row → plan / checklist of review steps | THINK / match cut | `Inspectable path.` | “Luxor9 makes the path inspectable—from intake to disposition.” |
 | 3 | 7–12s | Approval binding UI (tenant, principal, action, expiry—conceptual labels); B&W → color on confirm | ACT / B&W → color | `Bound approval.` | “Approvals bind to the exact action. Material changes invalidate them.” |
-| 4 | 12–17s | X-ray of audit / evidence ledger strip | PROVE / X-ray | `Ledger, not lore.` | “What ran, what was proven, what remains unverified—on the ledger.” |
+| 4 | 12–17s | X-ray of audit / evidence ledger strip; row ID `LX9/EVT/######` (synthetic demo—never a live production ID) | PROVE / X-ray | `Ledger, not lore.` | “What ran, what was proven, what remains unverified—on the ledger.” |
 | 5 | 17–19.5s | Soft cyan/ivory leak as desk returns to calm idle | LEARN / light leak | `Operate with control.` | “Operate with control. Improve each cycle.” |
 | 6 | 19.5–22s | Signature closer | — | Wordmark + doctrine | *(no VO; signature cadence)* |
 
@@ -184,7 +184,7 @@ Exception desk, not a black box. Luxor9: human authority before consequential GS
 - “Human authority before consequential action.”
 - “Evidence with source, time, and verification status.”
 - “ICAI estimates 3–8 hours per client per month for GSTR-2B reconciliation.” *(sourced; do not turn into Luxor9 savings)*
-- “Example queue: twelve open mismatches.” *(must say example)*
+- “Queue: twelve open mismatches (example).”
 
 **Forbidden**
 
