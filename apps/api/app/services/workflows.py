@@ -115,12 +115,19 @@ async def save_workflow_context(
     incoming = dict(context or {})
     if current.get("interview_confirmed") or current.get("intent"):
         # Preserve confirmation artifacts; only refresh interview if still advancing.
-        merged = {**current, **{k: v for k, v in incoming.items() if k not in {"intent", "interview_confirmed"}}}
+        skip = {"intent", "interview_confirmed"}
+        merged = {
+            **current,
+            **{k: v for k, v in incoming.items() if k not in skip},
+        }
         if current.get("interview_confirmed"):
             # Do not regress a confirmed interview with a stale questioning snapshot.
             confirmed_phase = (current.get("interview") or {}).get("phase")
             incoming_phase = (incoming.get("interview") or {}).get("phase")
-            if confirmed_phase == "confirmed" and incoming_phase not in {None, "confirmed"}:
+            if confirmed_phase == "confirmed" and incoming_phase not in {
+                None,
+                "confirmed",
+            }:
                 merged["interview"] = current.get("interview")
             elif "interview" in incoming:
                 merged["interview"] = incoming["interview"]
