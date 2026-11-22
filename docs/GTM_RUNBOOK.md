@@ -2,7 +2,7 @@
 
 ## Product one-liner
 
-**Luxor9 for Real-Estate Developers** — speak or chat a development brief → Interview Me clarifies → agents gather evidence → one automation card → Approve runs a **read-only live API call** and shows real data on the card (D-012).
+**Luxor9 for Real-Estate Developers** — speak or chat a development brief → Interview Me clarifies → agents gather evidence → one automation card → Approve triggers a **read-only live call** that returns **real data for display only** (D-012 option 1).
 
 ## Thin stack
 
@@ -43,7 +43,7 @@ make ui-install && make ui-dev
 2. **Interview Me (PR #14)** asks clarifying questions before a plan is built.
 3. Show the answer. Say clearly: research fixtures are **synthetic** until live sources (L9-013); claims stay **UNVERIFIED** — do not present them as real Dubai market facts.
 4. Show **one** automation card with **one** Approve button.
-5. Approve → **read-only live API call** on the cloud backend; show the real data returned on the card (D-012). No CRM/ERP write. No paid ads.
+5. Approve → **read-only live call** on the cloud backend; **real data for display only** on the card (D-012). Proves live connection — **without sending anything real** outward.
 
 ## B) Local rehearsal (real FastAPI + Postgres — not in-memory Tower)
 
@@ -99,4 +99,4 @@ flutter run -d ios --dart-define=API_BASE_URL=http://<your-lan-ip>:8000
 - Full C-suite executives (CMO pack only; others are roadmap stubs)
 - Production Clerk SSO until JWKS path is finished
 
-**What you *can* claim for Approve (D-012):** pressing Approve hits the live backend with a **read-only** call and shows real data on the card.
+**What you *can* claim for Approve (D-012 option 1):** pressing Approve hits the live backend with a **read-only** call and shows **real data for display only** — connected and working, without sending anything real.

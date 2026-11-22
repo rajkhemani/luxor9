@@ -19,11 +19,11 @@ Plain list of big choices. **Accepted** means we agreed. **OPEN** means we still
 | D-011a | Demo UX quality: **both voice and chat**; experience must be excellent | **Accepted** | 2026-11-22 | Extends D-011; Approve proof = **D-012** |
 | D-011b | **Customer pitch** uses the **real cloud API**; not Control Tower in-memory mode | **Accepted** | 2026-11-22 | Local FastAPI+Postgres = rehearsal only; in-memory Tower (`911b817`) = offline/dev; live Approve = **D-012** |
 | D-011c | Use open PR #14 **Interview Me** (ask questions before the plan) | **Accepted** | 2026-11-22 | Merge/land #14 needed; Approve after card = **D-012** |
-| D-012 | Approve runs a **read-only live API call** and shows real data back on the card | **Accepted** (resolved) | 2026-11-22 | Proves real backend connection. **Not** CRM/ERP writes. **Not** paid ad spend. Closed the earlier sandbox-only conflict for this demo path. |
+| D-012 | Approve = **read-only live API call**; show real data on the card (**display only**) | **Accepted** (resolved — option 1) | 2026-11-22 | Proves the system connects to a live backend and works. **No real outbound send** (no CRM/ERP write, no paid ads, no customer message). Referenced from D-011 / D-011a / D-011b / D-011c. |
 | D-013 | Phase 00 is **approved enough for demos**; formal written sign-off comes later | **Accepted** (demo authority only) | 2026-11-22 | Phase 00 not fully ACCEPTED in HOTL sense |
 
 ## D-012 resolution (simple)
 
-**Chosen action:** when the customer presses Approve, the app calls a **live read-only API** on the real backend and shows that real response data on the automation card.
+**Founder choice (option 1):** when the customer presses Approve, the app makes a **read-only live API call**. That call returns **real data for display only** on the automation card. It proves Luxor9 is connected to a live system and actually works — **without sending anything real** outward (no write, no spend, no blast).
 
-**Still not allowed without a new decision:** live CRM writes, live ERP writes, or real paid ad spend.
+**Closed.** D-011a / D-011b / D-011c all point here for the Approve proof.

@@ -7,7 +7,7 @@
   - Real cloud backend for the pitch (not in-memory Tower mode).
   - Use PR #14 Interview Me before the plan.
   - Phase 00 ok for demos; formal sign-off later.
-  - **D-012 closed:** Approve = **read-only live API call** showing real data on the card (not CRM/ERP writes; not paid ads).
+  - **D-012 closed (option 1):** Approve = **read-only live API call**; **real data for display only** — proves live connection without sending anything real outward.
 - `main` tip noted: `911b817` in-memory Control Tower demo mode (offline/dev path).
 - Standing agent rule added: ask simple clarifying questions **one at a time** before multi-option work.
 - Task **L9-DEMO-APPROVE-LIVE** unblocked → next step: implement the read-only live call.
