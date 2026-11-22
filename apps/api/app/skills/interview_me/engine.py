@@ -17,25 +17,41 @@ _YES = {"yes", "yes.", "y", "confirm", "confirmed", "looks right", "that's right
 _NO = {"no", "no.", "n", "refine", "not quite", "wrong"}
 _MIN_ANSWER_LEN = 3
 
-# Longer markers first so "out of scope is" wins over shorter overlaps.
+# Explicit label markers only — never bare content words like "sales"/"evidence"
+# (those truncate mid-sentence when used as extraction prefixes).
 _FIELD_MARKERS: list[tuple[str, tuple[str, ...]]] = [
     ("out_of_scope", ("out of scope is", "out of scope:", "not doing")),
     ("outcome", ("outcome is", "outcome:")),
-    ("constraint", ("constraint:", "constraint is", "sandbox", "no live")),
-    ("success", ("success is", "success:", "evidence")),
+    ("constraint", ("constraint is", "constraint:")),
+    ("success", ("success is", "success:")),
     (
         "user",
         (
+            "for our marketing",
+            "for our sales",
             "for our",
             "for the sales",
-            "for sales",
-            "for our marketing",
-            "for marketing",
             "for the c-suite",
+            "for sales",
+            "for marketing",
             "for c-suite",
         ),
     ),
-    ("why_now", ("why now", "why now:")),
+    ("why_now", ("why now is", "why now:")),
+]
+
+# Soft presence fills a canned phrase when empty — does not slice the utterance.
+_SOFT_DEFAULTS: list[tuple[str, tuple[str, ...], str]] = [
+    (
+        "constraint",
+        ("sandbox", "no live"),
+        "Sandbox only — no live spend without Trust approval",
+    ),
+    (
+        "success",
+        ("evidence",),
+        "Evidence-backed result with gaps flagged for human review",
+    ),
 ]
 
 
@@ -127,6 +143,13 @@ def _apply_keyword_fields(statement: dict[str, str], message: str, *, overwrite:
             continue
         if overwrite or not statement.get(key):
             statement[key] = extracted
+    lower = message.lower()
+    for key, needles, default in _SOFT_DEFAULTS:
+        if statement.get(key) and not overwrite:
+            continue
+        if any(n in lower for n in needles):
+            if overwrite or not statement.get(key):
+                statement[key] = default
 
 
 def _ingest_answer(
@@ -137,10 +160,8 @@ def _ingest_answer(
     state["answers"] = answers
     statement = dict(state.get("statement") or {})
     if field:
-        # Prefer an explicit "field is …" extraction when present; else whole answer.
-        markers = next((m for k, m in _FIELD_MARKERS if k == field), ())
-        extracted = _extract_marked_value(message, markers) if markers else None
-        statement[field] = extracted or message.strip()
+        # Asked field always gets the full reply — never a truncated keyword suffix.
+        statement[field] = message.strip()
     _apply_keyword_fields(statement, message, overwrite=overwrite)
     state["statement"] = statement
 

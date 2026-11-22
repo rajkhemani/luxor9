@@ -389,6 +389,33 @@ def test_sales_budget_phrase_does_not_fill_user_field():
     assert "user" in statement
 
 
+def test_pending_answer_keeps_full_text_not_keyword_suffix():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    state = engine.start("Automate Dubai launch").state
+    # Accept path via substantive answer that contains soft words.
+    result = engine.continue_(
+        state,
+        "Sales + marketing launch team, because market-to-launch briefs usually serve that group first.",
+    )
+    user = result.state["statement"]["user"]
+    assert user.startswith("Sales + marketing")
+    assert user != "and"
+    assert "serve that group first" in user
+
+
+def test_soft_sandbox_fills_canned_constraint_without_truncating_pending():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    started = engine.start("Automate Dubai launch")
+    state = engine.continue_(started.state, "for our sales launch war-room").state
+    result = engine.continue_(
+        state,
+        "Success is an evidence-backed launch pack with gaps flagged.",
+    )
+    # Pending field for Q2 is outcome — full sentence must stick.
+    assert "evidence-backed launch pack" in result.state["statement"]["outcome"].lower()
+    assert result.state["statement"]["outcome"] != "backed launch pack with gaps flagged."
+
+
 def test_refinement_parses_field_values_not_whole_utterance():
     engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
     state = {

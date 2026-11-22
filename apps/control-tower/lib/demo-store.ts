@@ -422,6 +422,20 @@ function continueDemoInterview(
   ]);
   const no = new Set(["no", "no.", "n", "refine", "not quite", "wrong"]);
 
+  const formatRestate = () => {
+    const s = interview.statement;
+    return (
+      `Here's what I now think you want (confidence ~${interview.confidence}%):\n\n` +
+      `- Outcome:      ${s.outcome || "—"}\n` +
+      `- User:         ${s.user || "—"}\n` +
+      `- Why now:      ${s.why_now || "—"}\n` +
+      `- Success:      ${s.success || "—"}\n` +
+      `- Constraint:   ${s.constraint || "—"}\n` +
+      `- Out of scope: ${s.out_of_scope || "—"}\n\n` +
+      `Yes / no / refine?`
+    );
+  };
+
   if (interview.phase === "restate") {
     if (yes.has(normalized)) {
       interview.phase = "confirmed";
@@ -435,8 +449,45 @@ function continueDemoInterview(
         awaiting: "blueprint_approval",
       };
     }
-    interview.phase = "questioning";
-    interview.confidence = Math.max(40, interview.confidence - 15);
+    if (no.has(normalized)) {
+      interview.confidence = Math.max(40, interview.confidence - 15);
+      const nextQ = DEMO_INTERVIEW_QUESTIONS.find((q) => !interview.asked_ids.includes(q.id));
+      if (nextQ) {
+        interview.phase = "questioning";
+        interview.asked_ids.push(nextQ.id);
+        interview.questions_asked += 1;
+        interview.pending_field = nextQ.field;
+        return {
+          reply: interviewQuestionReply(interview.hypothesis, interview.confidence, nextQ),
+          workflow: wf,
+          awaiting: "interview_answer",
+        };
+      }
+      interview.phase = "restate";
+      return {
+        reply: `Understood — tell me what to change in the intent summary.\n\n${formatRestate()}`,
+        workflow: wf,
+        awaiting: "interview_confirm",
+      };
+    }
+    // Freeform refinement note — stay in restate; do not treat as GUESS reject.
+    const lower = message.toLowerCase();
+    if (lower.includes("outcome is") || lower.includes("outcome:")) {
+      const idx = Math.max(lower.indexOf("outcome is"), lower.indexOf("outcome:"));
+      const marker = lower.includes("outcome is") ? "outcome is" : "outcome:";
+      interview.statement.outcome = message.slice(idx + marker.length).replace(/^[\s:—-]+/, "").split(";")[0].trim();
+    }
+    if (lower.includes("out of scope is") || lower.includes("out of scope:")) {
+      const marker = lower.includes("out of scope is") ? "out of scope is" : "out of scope:";
+      const idx = lower.indexOf(marker);
+      interview.statement.out_of_scope = message.slice(idx + marker.length).replace(/^[\s:—-]+/, "").trim();
+    }
+    interview.phase = "restate";
+    return {
+      reply: formatRestate(),
+      workflow: wf,
+      awaiting: "interview_confirm",
+    };
   }
 
   const asked = new Set(interview.asked_ids);

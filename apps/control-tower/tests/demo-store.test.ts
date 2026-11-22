@@ -21,6 +21,31 @@ describe("control tower in-memory demo store", () => {
     expect(overview.recent_workflows[0]?.id).toBe("wf_dubai_creek_001");
   });
 
+  it("refine from restate asks for intent edits instead of rejecting the last guess", () => {
+    const start = handleChatMessage("Launch intel for Palm Jebel Ali villas");
+    let body = start;
+    for (const answer of [
+      "For our sales and marketing launch team.",
+      "Success is an evidence-backed launch pack with gaps flagged.",
+      "Constraint: sandbox only, no live ad spend.",
+    ]) {
+      body = handleChatMessage(answer, body.workflow.id);
+    }
+    expect(body.awaiting).toBe("interview_confirm");
+
+    const refined = handleChatMessage("refine", body.workflow.id);
+    expect(refined.awaiting).toBe("interview_confirm");
+    expect(refined.reply).toMatch(/tell me what to change|Yes \/ no \/ refine/i);
+    expect(refined.reply).not.toMatch(/that guess was wrong/i);
+
+    const note = handleChatMessage(
+      "outcome is market/competitor launch pack; out of scope is live ads",
+      refined.workflow.id,
+    );
+    expect(note.awaiting).toBe("interview_confirm");
+    expect(note.reply.toLowerCase()).toMatch(/market\/competitor/);
+  });
+
   it("interviews before drafting a blueprint, then confirms and executes", () => {
     const start = handleChatMessage("Launch intel for Palm Jebel Ali villas");
     expect(start.workflow.status).toBe("draft");
