@@ -17,6 +17,15 @@ UI_DIR="$ROOT/apps/control-tower"
 LOCK_DIR="${TMPDIR:-/tmp}/luxor9-cloud-start.lock"
 API_HOST="${LUXOR9_API_HOST:-127.0.0.1}"
 UI_HOST="${LUXOR9_UI_HOST:-127.0.0.1}"
+# Probe bind-all hosts via loopback; otherwise probe the configured bind address.
+API_PROBE_HOST="$API_HOST"
+UI_PROBE_HOST="$UI_HOST"
+if [ "$API_HOST" = "0.0.0.0" ] || [ "$API_HOST" = "::" ]; then
+  API_PROBE_HOST="127.0.0.1"
+fi
+if [ "$UI_HOST" = "0.0.0.0" ] || [ "$UI_HOST" = "::" ]; then
+  UI_PROBE_HOST="127.0.0.1"
+fi
 # Browser-reachable API URL for Control Tower (override when using port forwarding).
 API_PUBLIC_BASE="${LUXOR9_API_PUBLIC_BASE:-http://127.0.0.1:8000}"
 CURL=(curl -sf --connect-timeout 1 --max-time 2)
@@ -47,13 +56,13 @@ require_tmux() {
 
 api_ready() {
   local body
-  body="$("${CURL[@]}" http://127.0.0.1:8000/health 2>/dev/null || true)"
+  body="$("${CURL[@]}" "http://${API_PROBE_HOST}:8000/health" 2>/dev/null || true)"
   [[ "$body" == *"luxor9-api"* && "$body" == *"\"status\":\"ok\""* ]]
 }
 
 ui_ready() {
   local code
-  code="$("${CURL[@]}" -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ 2>/dev/null || true)"
+  code="$("${CURL[@]}" -o /dev/null -w '%{http_code}' "http://${UI_PROBE_HOST}:3000/" 2>/dev/null || true)"
   [[ "$code" == "200" || "$code" == "304" ]]
 }
 

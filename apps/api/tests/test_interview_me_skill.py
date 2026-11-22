@@ -71,6 +71,48 @@ def test_resolve_guardrails_rejects_non_numeric_overrides():
         )
 
 
+def test_resolve_guardrails_coerces_string_false():
+    g = resolve_guardrails(
+        {
+            "interview_guardrails": {
+                "enabled": "false",
+                "require_explicit_yes": "false",
+            }
+        }
+    )
+    assert g.enabled is False
+    assert g.require_explicit_yes is False
+
+
+def test_restate_no_asks_next_question_instead_of_loop():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    state = {
+        "phase": "restate",
+        "confidence": 90,
+        "questions_asked": 2,
+        "statement": {
+            "outcome": "launch pack",
+            "user": "sales",
+            "why_now": "Q2",
+            "success": "evidence",
+            "constraint": "sandbox",
+            "out_of_scope": "live ads",
+        },
+        "objective": "Automate Dubai launch",
+            "asked_ids": ["re_who", "re_outcome"],
+        "answers": [],
+        "pending_field": None,
+        "hypothesis": "test",
+        "guardrails": {},
+    }
+    result = engine.continue_(state, "no")
+    assert result.ready_for_automation is False
+    assert result.awaiting == "interview_answer"
+    assert result.state["phase"] == "questioning"
+    assert "Q:" in result.reply
+    assert result.state["questions_asked"] == 3
+
+
 @pytest.mark.asyncio
 async def test_chat_starts_interview_not_blueprint(client):
     chat = await client.post(

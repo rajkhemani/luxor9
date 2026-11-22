@@ -132,13 +132,40 @@ class InterviewEngine:
             if lower in _NO or "refine" in lower:
                 state["phase"] = "questioning"
                 state["confidence"] = max(40, int(state.get("confidence", 50)) - 15)
-                # Fall through to ask next / re-ask
-            else:
-                # Treat as refinement note (including yes-prefix elaborations)
-                _ingest_answer(state, text, None)
-                state["confidence"] = _bump_confidence(state, self.guardrails)
-                reply = _format_restate(state.get("statement") or {}, int(state["confidence"]))
-                return InterviewResult(reply=reply, awaiting="interview_confirm", state=state)
+                asked_ids = list(state.get("asked_ids") or [])
+                next_q = next((q for q in self.questions if q.id not in asked_ids), None)
+                if next_q is None:
+                    state["phase"] = "restate"
+                    reply = (
+                        "Understood — tell me what to change in the intent summary.\n\n"
+                        + _format_restate(
+                            state.get("statement") or {}, int(state["confidence"])
+                        )
+                    )
+                    return InterviewResult(
+                        reply=reply, awaiting="interview_confirm", state=state
+                    )
+                asked_n = int(state.get("questions_asked", 0))
+                asked_ids.append(next_q.id)
+                state["asked_ids"] = asked_ids
+                state["questions_asked"] = asked_n + 1
+                state["pending_field"] = next_q.field
+                reason = "prior summary rejected — clarifying further"
+                reply = _format_question(
+                    next_q.prompt,
+                    next_q.guess,
+                    state.get("hypothesis", ""),
+                    int(state["confidence"]),
+                    reason,
+                )
+                return InterviewResult(
+                    reply=reply, awaiting="interview_answer", state=state
+                )
+            # Treat as refinement note (including yes-prefix elaborations)
+            _ingest_answer(state, text, None)
+            state["confidence"] = _bump_confidence(state, self.guardrails)
+            reply = _format_restate(state.get("statement") or {}, int(state["confidence"]))
+            return InterviewResult(reply=reply, awaiting="interview_confirm", state=state)
 
         # Normal Q&A turn
         pending = state.get("pending_field")

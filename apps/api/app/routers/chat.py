@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import Principal, get_principal, require_roles
+from app.auth import Principal, get_principal
 from app.config import get_settings
 from app.database import get_db
 from app.models.entities import RoleName, WorkflowStatus
@@ -196,7 +196,3 @@ async def _continue_interview(
         workflow=WorkflowOut(**workflow_service.workflow_to_dict(wf)),
         awaiting=result.awaiting,
     )
-
-
-# Keep require_roles import used for future route splits / lint stability.
-_ = require_roles
