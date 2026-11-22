@@ -410,7 +410,16 @@ function continueDemoInterview(
   }
 
   const normalized = message.trim().toLowerCase();
-  const yes = new Set(["yes", "yes.", "y", "confirm", "confirmed"]);
+  const yes = new Set([
+    "yes",
+    "yes.",
+    "y",
+    "confirm",
+    "confirmed",
+    "looks right",
+    "that's right",
+    "thats right",
+  ]);
   const no = new Set(["no", "no.", "n", "refine", "not quite", "wrong"]);
 
   if (interview.phase === "restate") {
@@ -482,7 +491,21 @@ function continueDemoInterview(
     };
   };
 
-  if (interview.answers.length >= 3 && interview.confidence >= 95) {
+  const minQ = Number(
+    (interview as { guardrails?: { min_questions?: number; confidence_threshold?: number; max_questions?: number } })
+      .guardrails?.min_questions ?? 3,
+  );
+  const threshold = Number(
+    (interview as { guardrails?: { confidence_threshold?: number } }).guardrails
+      ?.confidence_threshold ?? 95,
+  );
+  const maxQ = Number(
+    (interview as { guardrails?: { max_questions?: number } }).guardrails?.max_questions ?? 12,
+  );
+  if (
+    (interview.questions_asked >= minQ && interview.confidence >= threshold) ||
+    interview.questions_asked >= maxQ
+  ) {
     return enterRestate();
   }
 

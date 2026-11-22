@@ -133,7 +133,11 @@ async def save_workflow_context(
                 merged["interview"] = incoming["interview"]
         elif "interview" in incoming:
             merged["interview"] = incoming["interview"]
-        merged["interview_confirmed"] = current.get("interview_confirmed", True)
+        # Never invent confirmation — only preserve an explicit True already on disk.
+        if current.get("interview_confirmed") is True:
+            merged["interview_confirmed"] = True
+        elif "interview_confirmed" in current:
+            merged["interview_confirmed"] = bool(current.get("interview_confirmed"))
         if current.get("intent") is not None:
             merged["intent"] = current["intent"]
         wf.context = merged

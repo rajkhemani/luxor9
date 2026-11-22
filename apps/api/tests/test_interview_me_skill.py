@@ -348,6 +348,47 @@ def test_resolve_guardrails_rejects_fractional_and_non_mapping():
         resolve_guardrails({"interview_guardrails": ["not", "a", "mapping"]})
 
 
+@pytest.mark.asyncio
+async def test_save_context_does_not_invent_interview_confirmed(db_engine):
+    """Merging with intent alone must not stamp interview_confirmed=True."""
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from app.models.entities import Workflow, WorkflowStatus
+    from app.services import workflows as workflow_service
+
+    Session = async_sessionmaker(db_engine, expire_on_commit=False)
+    async with Session() as db:
+        wf = Workflow(
+            tenant_id="tenant_demo_dubai",
+            created_by_user_id="user_demo_admin",
+            pack="cmo_re",
+            objective="Automate Dubai launch",
+            status=WorkflowStatus.draft,
+            context={"interview": {"phase": "questioning"}, "intent": {"outcome": "partial"}},
+        )
+        db.add(wf)
+        await db.commit()
+        await db.refresh(wf)
+        saved = await workflow_service.save_workflow_context(
+            db,
+            "tenant_demo_dubai",
+            wf.id,
+            {"interview": {"phase": "questioning"}, "intent": {"outcome": "partial"}},
+        )
+        assert saved.context.get("intent") == {"outcome": "partial"}
+        assert saved.context.get("interview_confirmed") is not True
+
+
+def test_sales_budget_phrase_does_not_fill_user_field():
+    from app.skills.interview_me.engine import _apply_keyword_fields
+
+    statement: dict[str, str] = {}
+    _apply_keyword_fields(statement, "our sales targets are aggressive", overwrite=False)
+    assert "user" not in statement
+    _apply_keyword_fields(statement, "for our sales and marketing launch team", overwrite=False)
+    assert "user" in statement
+
+
 def test_refinement_parses_field_values_not_whole_utterance():
     engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
     state = {

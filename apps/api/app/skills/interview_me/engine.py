@@ -23,7 +23,18 @@ _FIELD_MARKERS: list[tuple[str, tuple[str, ...]]] = [
     ("outcome", ("outcome is", "outcome:")),
     ("constraint", ("constraint:", "constraint is", "sandbox", "no live")),
     ("success", ("success is", "success:", "evidence")),
-    ("user", ("for our", "sales", "marketing", "c-suite")),
+    (
+        "user",
+        (
+            "for our",
+            "for the sales",
+            "for sales",
+            "for our marketing",
+            "for marketing",
+            "for the c-suite",
+            "for c-suite",
+        ),
+    ),
     ("why_now", ("why now", "why now:")),
 ]
 
@@ -276,7 +287,7 @@ class InterviewEngine:
                     state=state,
                     ready_for_automation=True,
                 )
-            if lower in _NO or "refine" in lower:
+            if lower in _NO:
                 state["phase"] = "questioning"
                 state["confidence"] = max(40, int(state.get("confidence", 50)) - 15)
                 asked_ids = list(state.get("asked_ids") or [])
