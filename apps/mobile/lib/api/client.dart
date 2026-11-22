@@ -70,12 +70,9 @@ class LuxorApi {
         'context': {
           'location': 'Dubai',
           'product_type': 'residential',
+          // Category only — min/confidence gates come from API settings.
           'interview_guardrails': {
-            'enabled': true,
             'category': 'b2b_real_estate',
-            'min_questions': 3,
-            'confidence_threshold': 95,
-            'require_explicit_yes': true,
           },
         },
       }),

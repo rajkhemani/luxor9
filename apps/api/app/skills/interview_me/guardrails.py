@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Mapping
 
 
 @dataclass(frozen=True)
@@ -21,15 +21,29 @@ class InterviewGuardrails:
         return asdict(self)
 
 
-def _int_field(raw: dict[str, Any], key: str, default: int) -> int:
+def _int_field(raw: Mapping[str, Any], key: str, default: int) -> int:
     value = raw.get(key, default)
+    if isinstance(value, bool):
+        raise ValueError(f"interview_guardrails.{key} must be an integer")
+    if isinstance(value, float):
+        if not value.is_integer():
+            raise ValueError(f"interview_guardrails.{key} must be an integer")
+        value = int(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped or "." in stripped or "e" in stripped.lower():
+            raise ValueError(f"interview_guardrails.{key} must be an integer")
+        try:
+            value = int(stripped)
+        except ValueError as exc:
+            raise ValueError(f"interview_guardrails.{key} must be an integer") from exc
     try:
         return int(value)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"interview_guardrails.{key} must be an integer") from exc
 
 
-def _bool_field(raw: dict[str, Any], key: str, default: bool) -> bool:
+def _bool_field(raw: Mapping[str, Any], key: str, default: bool) -> bool:
     if key not in raw:
         return default
     value = raw[key]
@@ -52,7 +66,9 @@ def resolve_guardrails(context: dict[str, Any] | None = None) -> InterviewGuardr
     Callers pass ``context.interview_guardrails`` from chat / demo clients.
     """
     context = context or {}
-    raw = dict(context.get("interview_guardrails") or {})
+    raw = context.get("interview_guardrails") or {}
+    if not isinstance(raw, Mapping):
+        raise ValueError("interview_guardrails must be an object")
     return InterviewGuardrails(
         enabled=_bool_field(raw, "enabled", True),
         min_questions=max(1, _int_field(raw, "min_questions", 3)),

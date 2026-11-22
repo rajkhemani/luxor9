@@ -97,7 +97,13 @@ async def create_interview_workflow(
 async def save_workflow_context(
     db: AsyncSession, tenant_id: str, workflow_id: str, context: dict
 ) -> Workflow:
-    wf = await get_workflow(db, tenant_id, workflow_id)
+    result = await db.execute(
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.tenant_id == tenant_id)
+        .options(selectinload(Workflow.blueprint))
+        .with_for_update()
+    )
+    wf = result.scalar_one_or_none()
     if wf is None:
         raise ValueError("Workflow not found")
     wf.context = context
@@ -112,9 +118,18 @@ async def attach_blueprint_after_interview(
     objective: str | None = None,
 ) -> Workflow:
     """Propose a blueprint only after Interview Me confirmation."""
-    wf = await get_workflow(db, principal.tenant_id, workflow_id)
+    result = await db.execute(
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.tenant_id == principal.tenant_id)
+        .options(selectinload(Workflow.blueprint))
+        .with_for_update()
+    )
+    wf = result.scalar_one_or_none()
     if wf is None:
         raise ValueError("Workflow not found")
+    # Idempotent confirmation retry — return existing proposed blueprint.
+    if wf.blueprint is not None and wf.status == WorkflowStatus.awaiting_blueprint_approval:
+        return wf
     if wf.status != WorkflowStatus.draft:
         raise ValueError("Interview blueprint attach requires draft status")
     if wf.blueprint is not None:
@@ -549,6 +564,12 @@ async def overview(db: AsyncSession, tenant_id: str) -> dict:
             WorkflowStatus.awaiting_blueprint_approval,
             WorkflowStatus.awaiting_action_approval,
         }
+        or (
+            w.status == WorkflowStatus.draft
+            and isinstance(w.context, dict)
+            and (w.context.get("interview") or {}).get("phase")
+            in {"questioning", "restate", "confirmed"}
+        )
     )
     completed = sum(1 for w in workflows if w.status == WorkflowStatus.completed)
     return {

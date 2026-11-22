@@ -11,7 +11,8 @@ from app.skills.interview_me import InterviewEngine, resolve_guardrails
 
 router = APIRouter(prefix="/api/v1", tags=["chat"])
 
-_APPROVE = {"approve", "approve blueprint", "yes", "yes approve", "approve it"}
+# Bare "yes" is Interview Me confirmation only — never blueprint execution.
+_APPROVE = {"approve", "approve blueprint", "yes approve", "approve it"}
 _DECLINE = {"decline", "decline blueprint", "no", "reject", "reject blueprint"}
 
 
@@ -19,13 +20,27 @@ def _merge_guardrails(context: dict) -> dict:
     """Seed interview_guardrails from settings when caller omitted them."""
     settings = get_settings()
     ctx = dict(context or {})
-    raw = dict(ctx.get("interview_guardrails") or {})
+    raw = ctx.get("interview_guardrails") or {}
+    if raw is not None and not isinstance(raw, dict):
+        raise ValueError("interview_guardrails must be an object")
+    raw = dict(raw)
     raw.setdefault("enabled", settings.interview_enabled)
     raw.setdefault("min_questions", settings.interview_min_questions)
     raw.setdefault("confidence_threshold", settings.interview_confidence_threshold)
     raw.setdefault("category", settings.interview_category)
     ctx["interview_guardrails"] = raw
     return ctx
+
+
+def _ensure_interview_actor(wf, principal: Principal) -> None:
+    """Only the creator (or admin) may continue / confirm an interview."""
+    if principal.role == RoleName.admin:
+        return
+    if wf.created_by_user_id != principal.user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Only the workflow creator can continue this interview",
+        )
 
 
 @router.post("/chat", response_model=ChatMessageResponse)
@@ -35,17 +50,21 @@ async def chat(
     db: AsyncSession = Depends(get_db),
 ) -> ChatMessageResponse:
     text = body.message.strip().lower()
-    context = _merge_guardrails(body.context)
+    try:
+        context = _merge_guardrails(body.context)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if body.workflow_id and text in _APPROVE:
         wf = await workflow_service.get_workflow(db, principal.tenant_id, body.workflow_id)
         if wf is None:
             raise HTTPException(status_code=404, detail="Workflow not found")
-        # Active Interview Me: never treat yes/approve as blueprint approval.
+        # Active Interview Me: never treat approve aliases as blueprint approval.
         interview = (wf.context or {}).get("interview") or {}
         if wf.status == WorkflowStatus.draft and interview.get("phase") in {
             "questioning",
             "restate",
+            "confirmed",
         }:
             return await _continue_interview(db, principal, wf.id, body.message)
         if principal.role not in {RoleName.admin, RoleName.approver}:
@@ -72,6 +91,7 @@ async def chat(
         if wf.status == WorkflowStatus.draft and interview.get("phase") in {
             "restate",
             "questioning",
+            "confirmed",
         }:
             return await _continue_interview(db, principal, wf.id, body.message)
         if principal.role not in {RoleName.admin, RoleName.approver}:
@@ -93,8 +113,23 @@ async def chat(
         if wf is None:
             raise HTTPException(status_code=404, detail="Workflow not found")
 
-        if wf.status == WorkflowStatus.draft and (wf.context or {}).get("interview"):
+        interview = (wf.context or {}).get("interview") or {}
+        if wf.status == WorkflowStatus.draft and interview:
             return await _continue_interview(db, principal, wf.id, body.message)
+
+        # Bare "yes" after interview must never execute the blueprint.
+        if (
+            wf.status == WorkflowStatus.awaiting_blueprint_approval
+            and text in {"yes", "yes.", "y"}
+        ):
+            return ChatMessageResponse(
+                reply=(
+                    "Blueprint is ready. Reply **approve** to dispatch the CMO hierarchy, "
+                    "or **decline** to cancel."
+                ),
+                workflow=WorkflowOut(**workflow_service.workflow_to_dict(wf)),
+                awaiting="blueprint_approval",
+            )
 
         awaiting = None
         if wf.status.value == "awaiting_blueprint_approval":
@@ -160,6 +195,7 @@ async def _continue_interview(
     wf = await workflow_service.get_workflow(db, principal.tenant_id, workflow_id)
     if wf is None:
         raise HTTPException(status_code=404, detail="Workflow not found")
+    _ensure_interview_actor(wf, principal)
     ctx = dict(wf.context or {})
     interview_state = dict(ctx.get("interview") or {})
     try:

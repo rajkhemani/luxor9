@@ -27,11 +27,8 @@ async def test_yes_during_questioning_stays_in_interview(client):
     body = yes.json()
     assert body["workflow"]["status"] == "draft"
     assert body["workflow"]["blueprint"] is None
-    assert body["awaiting"] in {"interview_answer", "interview_confirm"}
-    assert body["workflow"]["context"]["interview"]["phase"] in {
-        "questioning",
-        "restate",
-    }
+    assert body["awaiting"] == "interview_answer"
+    assert body["workflow"]["context"]["interview"]["phase"] == "questioning"
 
 
 def test_restate_yes_prefix_is_refinement_not_confirm():
@@ -165,23 +162,31 @@ async def test_interview_blocks_automation_until_confirmed(client):
         assert body["workflow"]["status"] == "draft"
 
     assert body is not None
-    # After enough answers we should be at restate / confirm, not automation yet.
-    assert body["awaiting"] in {"interview_answer", "interview_confirm"}
+    assert body["awaiting"] == "interview_confirm"
     interview = body["workflow"]["context"]["interview"]
     assert interview["questions_asked"] >= interview["guardrails"]["min_questions"]
 
-    if body["awaiting"] == "interview_confirm":
-        confirmed = await client.post(
-            "/api/v1/chat",
-            json={"message": "yes", "workflow_id": wf_id},
-            headers={"X-Demo-User": "user_demo_admin"},
-        )
-        assert confirmed.status_code == 200
-        final = confirmed.json()
-        assert final["awaiting"] == "blueprint_approval"
-        assert final["workflow"]["status"] == "awaiting_blueprint_approval"
-        assert final["workflow"]["blueprint"] is not None
-        assert final["workflow"]["blueprint"]["status"] == "proposed"
+    confirmed = await client.post(
+        "/api/v1/chat",
+        json={"message": "yes", "workflow_id": wf_id},
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    assert confirmed.status_code == 200
+    final = confirmed.json()
+    assert final["awaiting"] == "blueprint_approval"
+    assert final["workflow"]["status"] == "awaiting_blueprint_approval"
+    assert final["workflow"]["blueprint"] is not None
+    assert final["workflow"]["blueprint"]["status"] == "proposed"
+
+    # Retried bare yes must not approve/execute the blueprint.
+    retry = await client.post(
+        "/api/v1/chat",
+        json={"message": "yes", "workflow_id": wf_id},
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    assert retry.status_code == 200
+    assert retry.json()["awaiting"] == "blueprint_approval"
+    assert retry.json()["workflow"]["status"] == "awaiting_blueprint_approval"
 
 
 @pytest.mark.asyncio
@@ -271,3 +276,67 @@ async def test_chat_still_approves_after_interview(client):
     result = approved.json()["workflow"]
     assert result["status"] in {"awaiting_action_approval", "completed"}
     assert result["report"] is not None
+
+
+@pytest.mark.asyncio
+async def test_member_cannot_continue_others_interview(client):
+    first = await client.post(
+        "/api/v1/chat",
+        json={"message": "Automate my Dubai launch marketing"},
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    wf_id = first.json()["workflow"]["id"]
+    hijack = await client.post(
+        "/api/v1/chat",
+        json={"message": "Sales team needs a launch pack", "workflow_id": wf_id},
+        headers={"X-Demo-User": "user_demo_member"},
+    )
+    assert hijack.status_code == 403
+
+
+def test_blank_answers_do_not_advance_interview():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    started = engine.start("Automate Dubai launch")
+    result = engine.continue_(started.state, "   ")
+    assert result.ready_for_automation is False
+    assert result.awaiting == "interview_answer"
+    assert result.state["questions_asked"] == 1
+    assert result.state["phase"] == "questioning"
+
+
+def test_resolve_guardrails_rejects_fractional_and_non_mapping():
+    with pytest.raises(ValueError, match="interview_guardrails"):
+        resolve_guardrails({"interview_guardrails": {"min_questions": 2.5}})
+    with pytest.raises(ValueError, match="interview_guardrails"):
+        resolve_guardrails({"interview_guardrails": ["not", "a", "mapping"]})
+
+
+def test_refinement_overwrites_statement_fields():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    state = {
+        "phase": "restate",
+        "confidence": 85,
+        "questions_asked": 3,
+        "statement": {
+            "outcome": "old pack",
+            "user": "sales",
+            "why_now": "Q2",
+            "success": "evidence",
+            "constraint": "sandbox",
+            "out_of_scope": "live ads",
+        },
+        "objective": "Automate Dubai launch",
+        "asked_ids": ["re_who", "re_outcome", "re_success"],
+        "answers": [],
+        "pending_field": None,
+        "hypothesis": "test",
+        "guardrails": {},
+    }
+    result = engine.continue_(
+        state,
+        "Yes — outcome is market/competitor launch pack; out of scope is live ads.",
+    )
+    assert result.state["phase"] == "restate"
+    assert "market/competitor" in result.state["statement"]["outcome"].lower() or (
+        "market/competitor" in result.reply.lower()
+    )

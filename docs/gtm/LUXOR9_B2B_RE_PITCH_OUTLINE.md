@@ -25,7 +25,8 @@
 ## Demo talk track (15 min)
 
 1. Open Command Bridge with Dubai Creek Harbour brief (AED 2.5–6M, Q2).
-2. Approve blueprint.
-3. Show workflow evidence + UNVERIFIED gaps.
-4. Approvals → sandbox campaign publish only.
-5. Close on multi-category roadmap; RE is live now.
+2. Complete Interview Me: answer 3 short clarifying questions, review the restated intent, reply **yes**.
+3. Approve the proposed blueprint (explicit **approve** — bare yes only confirms intent).
+4. Show workflow evidence + UNVERIFIED gaps.
+5. Approvals → sandbox campaign publish only.
+6. Close on multi-category roadmap; RE is live now.
