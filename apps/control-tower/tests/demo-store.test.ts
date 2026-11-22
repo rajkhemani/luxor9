@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { localInterviewChat } from "../lib/api";
 import {
   decideApproval,
   getDemoState,
@@ -68,6 +69,14 @@ describe("control tower in-memory demo store", () => {
     expect(reply).toMatch(/verified claims/);
     expect(reply).toMatch(/- user:\s+cmo/);
     expect(reply).not.toMatch(/first draft/);
+  });
+
+  it("local api helper starts Interview Me instead of drafting a blueprint", () => {
+    const start = localInterviewChat("Launch intel without remote API base");
+    expect(start.awaiting).toBe("interview_answer");
+    expect(start.workflow.status).toBe("draft");
+    expect(start.workflow.blueprint).toBeNull();
+    expect(start.reply).toMatch(/Q:/);
   });
 
   it("interviews before drafting a blueprint, then confirms and executes", () => {
