@@ -62,3 +62,12 @@ At the end of every task, report:
 ## Human-on-the-Loop project system
 
 Persistent tracking lives under `docs/project/`, `docs/architecture/`, `docs/quality/`, and `docs/evidence/`. Conversational memory is not the project tracker. Phase gates and RED/AMBER/GREEN authority follow the founder HOTL meta-prompt. Start each major effort from `docs/project/MASTER_STATUS.md`.
+
+## Standing rule — ask simplifying questions
+
+Before and during work with multiple options or unclear scope:
+1. Ask the user a simplifying question in simple language.
+2. Ask **one question at a time**.
+3. Wait for their answer before proceeding on that choice.
+
+Also enforced by `.cursor/rules/40-ask-simplifying-questions.mdc`.
