@@ -16,6 +16,14 @@
 
 Canonical demo UX: `docs/project/DEMO_UX_VOICE_FIRST.md`. Older scripts in `docs/MOBILE.md` and `docs/PILOT_PACKAGING.md` are **legacy** for this pitch.
 
+### Preflight (before the talk track)
+
+1. **Cloud API URL** set for the customer pitch (section A) — not in-memory Tower; not localhost for the customer-facing show.
+2. **Interview Me (PR #14)** must be available on the API you are pitching:
+   - either merge/land [#14](https://github.com/rajkhemani/luxor9/pull/14) onto the deployed branch, **or**
+   - run / deploy from `cursor/luxor9-dubai-demo-ready-ace5` until it merges.  
+   Do **not** promise Interview Me from stock `main` alone while #14 is still open.
+
 ## A) Customer pitch (cloud backend)
 
 ```bash

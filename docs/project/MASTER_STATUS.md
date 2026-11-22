@@ -20,7 +20,7 @@ We are preparing a Dubai real-estate developer demo: **voice and chat**, Intervi
 | Open security gap | Clerk JWKS unfinished |
 | Decisions just accepted | D-011, D-011a, D-011b, D-011c, **D-012** (read-only live Approve), D-013 |
 | Open PR of note | [#14](https://github.com/rajkhemani/luxor9/pull/14) Interview Me + B2B RE pitch |
-| Next engineering step | Wire Approve → read-only live API → show real data on the card |
+| Next engineering step | Land PR #14 (or deploy that branch) + wire Approve → read-only live API → show real data on the card |
 
 ## Verified (so far)
 

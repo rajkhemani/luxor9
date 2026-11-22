@@ -6,6 +6,8 @@
 
 **Canonical for the Dubai pitch.** Older chat→sandbox scripts in `docs/MOBILE.md` and `docs/PILOT_PACKAGING.md` are **legacy** — do not use them as the customer talk track.
 
+**Preflight:** Interview Me needs [PR #14](https://github.com/rajkhemani/luxor9/pull/14) merged or the pitch API running from that branch. Customer pitch uses a **cloud** API URL (D-011b).
+
 ## What the demo should feel like
 
 1. **Voice and chat both work** — the customer can speak or type. The experience must feel excellent either way.
