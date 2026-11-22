@@ -7,17 +7,7 @@ import {
   statusLabel,
   type CapabilityStatus,
 } from "@/lib/luxor-brand";
-
-type StackStatus = {
-  enabled: boolean;
-  agents?: Array<{ name: string; path: string }>;
-  connectivity?: Record<string, unknown>;
-  coworker_hub?: string;
-  duo_skin?: string;
-  intelligence?: string;
-};
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+import { client, type AguiStatus } from "@/lib/api";
 
 function badgeClass(status: CapabilityStatus): string {
   if (status === "live") return "badge badge-live";
@@ -27,16 +17,14 @@ function badgeClass(status: CapabilityStatus): string {
 }
 
 export default function LuxorStackPage() {
-  const [status, setStatus] = useState<StackStatus | null>(null);
+  const [status, setStatus] = useState<AguiStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/v1/agui/status`, { cache: "no-store" });
-        if (!res.ok) throw new Error(await res.text());
-        const body = (await res.json()) as StackStatus;
+        const body = await client.aguiStatus();
         if (!cancelled) setStatus(body);
       } catch (err) {
         if (!cancelled) {

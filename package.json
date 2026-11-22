@@ -1,0 +1,15 @@
+{
+  "name": "luxor9",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/control-tower"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/control-tower",
+    "build": "npm run build --workspace=apps/control-tower",
+    "start": "npm run start --workspace=apps/control-tower",
+    "lint": "npm run typecheck --workspace=apps/control-tower",
+    "test": "npm run test --workspace=apps/control-tower"
+  }
+}

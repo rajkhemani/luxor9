@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { client } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function OverviewPage() {
   let data;
   try {

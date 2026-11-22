@@ -1,5 +1,7 @@
 import { client } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function AgentsPage() {
   const data = await client.agents().catch(() => null);
   const pack = (data?.packs as Array<Record<string, unknown>> | undefined)?.[0];

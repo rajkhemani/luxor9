@@ -1,5 +1,7 @@
 import { client } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export default async function MeteringPage() {
   const events = await client.metering().catch(() => []);
   return (
