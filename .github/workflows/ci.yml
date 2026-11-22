@@ -36,16 +36,14 @@ jobs:
 
   ui:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/control-tower
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: apps/control-tower/package-lock.json
+          cache-dependency-path: package-lock.json
+      # Root package.json uses workspaces; npm ci must run at the repo root.
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
+      - run: npm run typecheck --workspace=apps/control-tower
+      - run: npm test --workspace=apps/control-tower
