@@ -147,13 +147,14 @@ def _apply_keyword_fields(statement: dict[str, str], message: str, *, overwrite:
             continue
         if overwrite or not statement.get(key):
             statement[key] = extracted
+    # Soft fills never overwrite — including during restate refinements where
+    # label markers use overwrite=True. Canned phrases must not clobber labeled values.
     lower = message.lower()
     for key, needles, default in _SOFT_DEFAULTS:
-        if statement.get(key) and not overwrite:
+        if statement.get(key):
             continue
         if any(_has_whole_needle(lower, n) for n in needles):
-            if overwrite or not statement.get(key):
-                statement[key] = default
+            statement[key] = default
 
 
 def _ingest_answer(

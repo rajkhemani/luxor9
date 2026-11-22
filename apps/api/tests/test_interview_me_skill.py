@@ -413,6 +413,41 @@ def test_soft_defaults_require_whole_word_needles():
     assert "evidence" in hits["success"].lower()
 
 
+def test_soft_defaults_do_not_clobber_labeled_refinement():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    state = {
+        "phase": "restate",
+        "confidence": 90,
+        "questions_asked": 3,
+        "statement": {
+            "outcome": "old pack",
+            "user": "sales",
+            "why_now": "Q2",
+            "success": "old success",
+            "constraint": "old constraint",
+            "out_of_scope": "old scope",
+        },
+        "objective": "Automate Dubai launch",
+        "asked_ids": ["re_who", "re_outcome", "re_success"],
+        "answers": [],
+        "pending_field": None,
+        "hypothesis": "test",
+        "guardrails": {},
+    }
+    result = engine.continue_(
+        state,
+        "constraint is brand-legal review only inside sandbox; "
+        "success is verified claims with evidence gaps listed",
+    )
+    assert result.state["phase"] == "restate"
+    constraint = result.state["statement"]["constraint"]
+    success = result.state["statement"]["success"]
+    assert "brand-legal" in constraint.lower()
+    assert "verified claims" in success.lower()
+    assert "without Trust approval" not in constraint
+    assert "Evidence-backed result with gaps flagged for human review" != success
+
+
 def test_pending_answer_keeps_full_text_not_keyword_suffix():
     engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
     state = engine.start("Automate Dubai launch").state
