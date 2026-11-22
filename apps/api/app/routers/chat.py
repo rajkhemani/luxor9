@@ -41,9 +41,12 @@ async def chat(
         wf = await workflow_service.get_workflow(db, principal.tenant_id, body.workflow_id)
         if wf is None:
             raise HTTPException(status_code=404, detail="Workflow not found")
-        # During interview confirm, "yes" means intent confirmation — not blueprint approve.
+        # Active Interview Me: never treat yes/approve as blueprint approval.
         interview = (wf.context or {}).get("interview") or {}
-        if wf.status == WorkflowStatus.draft and interview.get("phase") == "restate":
+        if wf.status == WorkflowStatus.draft and interview.get("phase") in {
+            "questioning",
+            "restate",
+        }:
             return await _continue_interview(db, principal, wf.id, body.message)
         if principal.role not in {RoleName.admin, RoleName.approver}:
             raise HTTPException(status_code=403, detail="Approver role required")
@@ -118,7 +121,10 @@ async def chat(
         )
 
     # New chat — Interview Me before any blueprint/automation.
-    guardrails = resolve_guardrails(context)
+    try:
+        guardrails = resolve_guardrails(context)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     if not guardrails.enabled:
         wf = await workflow_service.create_workflow_with_blueprint(
             db, principal, body.message, context, pack="cmo_re"
@@ -156,7 +162,10 @@ async def _continue_interview(
         raise HTTPException(status_code=404, detail="Workflow not found")
     ctx = dict(wf.context or {})
     interview_state = dict(ctx.get("interview") or {})
-    guardrails = resolve_guardrails(ctx)
+    try:
+        guardrails = resolve_guardrails(ctx)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     engine = InterviewEngine(guardrails)
     result = engine.continue_(interview_state, message)
     ctx["interview"] = result.state

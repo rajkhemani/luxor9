@@ -21,6 +21,14 @@ class InterviewGuardrails:
         return asdict(self)
 
 
+def _int_field(raw: dict[str, Any], key: str, default: int) -> int:
+    value = raw.get(key, default)
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"interview_guardrails.{key} must be an integer") from exc
+
+
 def resolve_guardrails(context: dict[str, Any] | None = None) -> InterviewGuardrails:
     """Merge request context overrides onto defaults.
 
@@ -30,9 +38,9 @@ def resolve_guardrails(context: dict[str, Any] | None = None) -> InterviewGuardr
     raw = dict(context.get("interview_guardrails") or {})
     return InterviewGuardrails(
         enabled=bool(raw.get("enabled", True)),
-        min_questions=max(1, int(raw.get("min_questions", 3))),
-        confidence_threshold=min(100, max(50, int(raw.get("confidence_threshold", 95)))),
+        min_questions=max(1, _int_field(raw, "min_questions", 3)),
+        confidence_threshold=min(100, max(50, _int_field(raw, "confidence_threshold", 95))),
         require_explicit_yes=bool(raw.get("require_explicit_yes", True)),
         category=str(raw.get("category", "b2b_real_estate")),
-        max_questions=max(2, int(raw.get("max_questions", 12))),
+        max_questions=max(2, _int_field(raw, "max_questions", 12)),
     )

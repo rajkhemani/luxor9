@@ -111,7 +111,8 @@ class InterviewEngine:
         lower = text.lower()
 
         if phase == "restate":
-            if lower in _YES or lower.startswith("yes"):
+            # Exact confirmation only — "yes — please change X" is a refinement.
+            if lower in _YES:
                 state["phase"] = "confirmed"
                 state["confidence"] = max(
                     int(state.get("confidence", 0)), self.guardrails.confidence_threshold
@@ -133,7 +134,7 @@ class InterviewEngine:
                 state["confidence"] = max(40, int(state.get("confidence", 50)) - 15)
                 # Fall through to ask next / re-ask
             else:
-                # Treat as refinement note
+                # Treat as refinement note (including yes-prefix elaborations)
                 _ingest_answer(state, text, None)
                 state["confidence"] = _bump_confidence(state, self.guardrails)
                 reply = _format_restate(state.get("statement") or {}, int(state["confidence"]))

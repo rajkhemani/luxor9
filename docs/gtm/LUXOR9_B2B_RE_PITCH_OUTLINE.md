@@ -17,11 +17,10 @@
 5. **One chat engine** — Automation built from each developer's business problem
 6. **Hallucination control** — Proof is part of execution; UNVERIFIED gaps stay visible
 7. **Ready automation** — Complete market-to-launch loop on a single chatbot
-8. **WhatsApp** — Channel Bridge / Luxor Channels; sandbox-first, Trust-gated delivery
-9. **Data stays with the developer** — Tenant-scoped operating context and evidence
-10. **Live proof · Dubai** — Creek Harbour 15-minute demo path
-11. **Roadmap close** — Multi-category platform; B2B Real Estate = first **LIVE** category
-12. **CTA** — Open Command Bridge. Run the Dubai brief.
+8. **Data stays with the developer** — Tenant-scoped operating context and evidence
+9. **Live proof · Dubai** — Creek Harbour 15-minute demo path
+10. **Roadmap (not live today)** — Channel Bridge / Luxor Channels (WhatsApp) planned post-MVP; multi-category platform; B2B Real Estate = first **LIVE** category
+11. **CTA** — Open Command Bridge. Run the Dubai brief.
 
 ## Demo talk track (15 min)
 

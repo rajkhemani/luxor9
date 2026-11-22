@@ -2,6 +2,74 @@
 
 import pytest
 
+from app.skills.interview_me.engine import InterviewEngine
+from app.skills.interview_me.guardrails import InterviewGuardrails, resolve_guardrails
+
+
+@pytest.mark.asyncio
+async def test_yes_during_questioning_stays_in_interview(client):
+    """Bare 'yes' while interviewing must not hit blueprint approval."""
+    first = await client.post(
+        "/api/v1/chat",
+        json={"message": "Automate my Dubai launch marketing"},
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    assert first.status_code == 200
+    wf_id = first.json()["workflow"]["id"]
+    assert first.json()["awaiting"] == "interview_answer"
+
+    yes = await client.post(
+        "/api/v1/chat",
+        json={"message": "yes", "workflow_id": wf_id},
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    assert yes.status_code == 200
+    body = yes.json()
+    assert body["workflow"]["status"] == "draft"
+    assert body["workflow"]["blueprint"] is None
+    assert body["awaiting"] in {"interview_answer", "interview_confirm"}
+    assert body["workflow"]["context"]["interview"]["phase"] in {
+        "questioning",
+        "restate",
+    }
+
+
+def test_restate_yes_prefix_is_refinement_not_confirm():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    state = {
+        "phase": "restate",
+        "confidence": 85,
+        "questions_asked": 3,
+        "statement": {
+            "outcome": "launch pack",
+            "user": "sales",
+            "why_now": "Q2",
+            "success": "evidence",
+            "constraint": "sandbox",
+            "out_of_scope": "live ads",
+        },
+        "objective": "Automate Dubai launch",
+        "asked_ids": [],
+        "answers": [],
+        "pending_field": None,
+        "hypothesis": "test",
+        "guardrails": {},
+    }
+    result = engine.continue_(
+        state,
+        "Yes — outcome is market/competitor launch pack; out of scope is live ads.",
+    )
+    assert result.ready_for_automation is False
+    assert result.awaiting == "interview_confirm"
+    assert result.state["phase"] == "restate"
+
+
+def test_resolve_guardrails_rejects_non_numeric_overrides():
+    with pytest.raises(ValueError, match="interview_guardrails"):
+        resolve_guardrails(
+            {"interview_guardrails": {"min_questions": "many", "confidence_threshold": 90}}
+        )
+
 
 @pytest.mark.asyncio
 async def test_chat_starts_interview_not_blueprint(client):
