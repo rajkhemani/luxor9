@@ -31,6 +31,14 @@ Until live research adapters (L9-013) ship, research fixtures are **synthetic**.
 | Outbound send | None — no CRM/ERP write, no paid ads, no blast |
 | Phase 00 | Good enough for demos; formal sign-off comes later (D-013) |
 
+## Interactive preview (mock — no cloud)
+
+Control Tower route **`/dubai-demo`** walks the intended experience end to end against the in-memory `demo-store`:
+
+speak/type → Interview Me → evidence → **one** campaign draft card → **Approve** → mock D-012 read-only payload **for display only**.
+
+This is a UX preview. It does **not** call the real cloud backend and does **not** replace L9-DEMO-APPROVE-LIVE wiring.
+
 ## Acceptance checklist (demo day)
 
 - [ ] Voice input works; chat input also works  
@@ -39,3 +47,4 @@ Until live research adapters (L9-013) ship, research fixtures are **synthetic**.
 - [ ] Exactly one automation card + one Approve button  
 - [ ] Approve runs a **read-only live** API call and shows real data on the card  
 - [ ] Customer pitch uses **cloud** API URL; in-memory Tower mode is off  
+

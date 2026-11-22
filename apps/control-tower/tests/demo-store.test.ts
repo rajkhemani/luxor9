@@ -4,6 +4,7 @@ import {
   getDemoState,
   getOverview,
   handleChatMessage,
+  previewDubaiApproveLiveRead,
   resetDemoState,
 } from "../lib/demo-store";
 
@@ -42,5 +43,17 @@ describe("control tower in-memory demo store", () => {
     const overview = getOverview();
     expect(overview.pending_approvals).toBe(0);
     expect(overview.completed_workflows).toBe(1);
+  });
+
+  it("builds a D-012 display-only live-read preview payload from the Dubai seed", () => {
+    const payload = previewDubaiApproveLiveRead();
+    expect(payload.decision).toBe("D-012");
+    expect(payload.read_only).toBe(true);
+    expect(payload.outbound_send).toBe(false);
+    expect(payload.mode).toBe("preview_mock");
+    expect(payload.workflow_id).toBe("wf_dubai_creek_001");
+    expect(payload.evidence.length).toBeGreaterThan(0);
+    expect(payload.claims.some((c) => c.status === "UNVERIFIED")).toBe(true);
+    expect(payload.display.objective).toContain("Dubai");
   });
 });

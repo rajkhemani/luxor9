@@ -13,6 +13,7 @@ export default function TowerLayout({ children }: { children: React.ReactNode })
           <Link href="/stack">Stack</Link>
           <Link href="/command">Command Bridge</Link>
           <Link href="/chat">Chat</Link>
+          <Link href="/dubai-demo">Dubai demo</Link>
           <Link href="/workflows">Workflows</Link>
           <Link href="/approvals">Approvals</Link>
           <Link href="/agents">Workforce</Link>
