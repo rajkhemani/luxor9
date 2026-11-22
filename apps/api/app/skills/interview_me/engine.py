@@ -29,7 +29,6 @@ _FIELD_MARKERS: list[tuple[str, tuple[str, ...]]] = [
         (
             "for our marketing",
             "for our sales",
-            "for our",
             "for the sales",
             "for the c-suite",
             "for sales",
@@ -41,6 +40,7 @@ _FIELD_MARKERS: list[tuple[str, tuple[str, ...]]] = [
 ]
 
 # Soft presence fills a canned phrase when empty — does not slice the utterance.
+# Needles match as whole words / phrases (\\b), not substrings.
 _SOFT_DEFAULTS: list[tuple[str, tuple[str, ...], str]] = [
     (
         "constraint",
@@ -53,6 +53,10 @@ _SOFT_DEFAULTS: list[tuple[str, tuple[str, ...], str]] = [
         "Evidence-backed result with gaps flagged for human review",
     ),
 ]
+
+
+def _has_whole_needle(haystack_lower: str, needle: str) -> bool:
+    return re.search(rf"\b{re.escape(needle)}\b", haystack_lower) is not None
 
 
 @dataclass
@@ -147,7 +151,7 @@ def _apply_keyword_fields(statement: dict[str, str], message: str, *, overwrite:
     for key, needles, default in _SOFT_DEFAULTS:
         if statement.get(key) and not overwrite:
             continue
-        if any(n in lower for n in needles):
+        if any(_has_whole_needle(lower, n) for n in needles):
             if overwrite or not statement.get(key):
                 statement[key] = default
 

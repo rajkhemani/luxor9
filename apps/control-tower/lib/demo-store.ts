@@ -278,6 +278,61 @@ const DEMO_INTERVIEW_QUESTIONS = [
   },
 ] as const;
 
+/** Label markers only — mirrors apps/api interview_me engine (no bare "for our"). */
+const DEMO_FIELD_MARKERS: Array<[string, string[]]> = [
+  ["out_of_scope", ["out of scope is", "out of scope:", "not doing"]],
+  ["outcome", ["outcome is", "outcome:"]],
+  ["constraint", ["constraint is", "constraint:"]],
+  ["success", ["success is", "success:"]],
+  [
+    "user",
+    [
+      "for our marketing",
+      "for our sales",
+      "for the sales",
+      "for the c-suite",
+      "for sales",
+      "for marketing",
+      "for c-suite",
+    ],
+  ],
+  ["why_now", ["why now is", "why now:"]],
+];
+
+function extractMarkedValue(message: string, markers: string[]): string | null {
+  const lower = message.toLowerCase();
+  for (const marker of markers) {
+    const idx = lower.indexOf(marker);
+    if (idx < 0) continue;
+    const start = idx + marker.length;
+    let rest = message.slice(start).replace(/^[\s:—-]+/, "");
+    let cut = rest.length;
+    const restLower = rest.toLowerCase();
+    for (const [, otherMarkers] of DEMO_FIELD_MARKERS) {
+      for (const other of otherMarkers) {
+        if (other === marker) continue;
+        const pos = restLower.indexOf(other);
+        if (pos >= 0) cut = Math.min(cut, pos);
+      }
+    }
+    const value = rest.slice(0, cut).replace(/[;\s]+$/g, "").trim();
+    if (value.length >= 3) return value;
+  }
+  return null;
+}
+
+function applyDemoKeywordFields(
+  statement: Record<string, string>,
+  message: string,
+  overwrite: boolean,
+): void {
+  for (const [key, markers] of DEMO_FIELD_MARKERS) {
+    const extracted = extractMarkedValue(message, markers);
+    if (!extracted) continue;
+    if (overwrite || !statement[key]) statement[key] = extracted;
+  }
+}
+
 function interviewQuestionReply(
   hypothesis: string,
   confidence: number,
@@ -470,19 +525,8 @@ function continueDemoInterview(
         awaiting: "interview_confirm",
       };
     }
-    // Freeform refinement note — stay in restate; do not treat as GUESS reject.
-    const lower = message.toLowerCase();
-    if (lower.includes("outcome is") || lower.includes("outcome:")) {
-      const idx = Math.max(lower.indexOf("outcome is"), lower.indexOf("outcome:"));
-      const marker = lower.includes("outcome is") ? "outcome is" : "outcome:";
-      interview.statement.outcome = message.slice(idx + marker.length).replace(/^[\s:—-]+/, "").split(";")[0].trim();
-    }
-    if (lower.includes("out of scope is") || lower.includes("out of scope:")) {
-      const marker = lower.includes("out of scope is") ? "out of scope is" : "out of scope:";
-      const idx = lower.indexOf(marker);
-      interview.statement.out_of_scope = message.slice(idx + marker.length).replace(/^[\s:—-]+/, "").trim();
-    }
-    interview.phase = "restate";
+    // Freeform refinement — parse all labeled fields (same markers as API engine).
+    applyDemoKeywordFields(interview.statement, message, true);
     return {
       reply: formatRestate(),
       workflow: wf,

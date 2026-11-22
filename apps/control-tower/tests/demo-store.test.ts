@@ -46,6 +46,30 @@ describe("control tower in-memory demo store", () => {
     expect(note.reply.toLowerCase()).toMatch(/market\/competitor/);
   });
 
+  it("restate refinement parses all labeled fields with correct marker offsets", () => {
+    const start = handleChatMessage("Launch intel for Creek Harbour");
+    let body = start;
+    for (const answer of [
+      "For our sales and marketing launch team.",
+      "Success is an evidence-backed launch pack with gaps flagged.",
+      "Constraint: sandbox only, no live ad spend.",
+    ]) {
+      body = handleChatMessage(answer, body.workflow.id);
+    }
+    expect(body.awaiting).toBe("interview_confirm");
+
+    const note = handleChatMessage(
+      "outcome: first draft; outcome is final version; success is verified claims; for our marketing CMO",
+      body.workflow.id,
+    );
+    expect(note.awaiting).toBe("interview_confirm");
+    const reply = note.reply.toLowerCase();
+    expect(reply).toMatch(/final version/);
+    expect(reply).toMatch(/verified claims/);
+    expect(reply).toMatch(/- user:\s+cmo/);
+    expect(reply).not.toMatch(/first draft/);
+  });
+
   it("interviews before drafting a blueprint, then confirms and executes", () => {
     const start = handleChatMessage("Launch intel for Palm Jebel Ali villas");
     expect(start.workflow.status).toBe("draft");

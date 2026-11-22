@@ -389,6 +389,30 @@ def test_sales_budget_phrase_does_not_fill_user_field():
     assert "user" in statement
 
 
+def test_greedy_for_our_does_not_fill_user():
+    from app.skills.interview_me.engine import _apply_keyword_fields
+
+    statement: dict[str, str] = {}
+    _apply_keyword_fields(statement, "for our team kickoff next week", overwrite=False)
+    assert "user" not in statement
+    _apply_keyword_fields(statement, "for our marketing leadership", overwrite=False)
+    assert statement.get("user", "").lower() == "leadership"
+
+
+def test_soft_defaults_require_whole_word_needles():
+    from app.skills.interview_me.engine import _apply_keyword_fields
+
+    false_hits: dict[str, str] = {}
+    _apply_keyword_fields(false_hits, "evidently the sandboxed plan has no lives left", overwrite=False)
+    assert "success" not in false_hits
+    assert "constraint" not in false_hits
+
+    hits: dict[str, str] = {}
+    _apply_keyword_fields(hits, "stay in sandbox with evidence and no live spend", overwrite=False)
+    assert "sandbox" in hits["constraint"].lower()
+    assert "evidence" in hits["success"].lower()
+
+
 def test_pending_answer_keeps_full_text_not_keyword_suffix():
     engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
     state = engine.start("Automate Dubai launch").state
