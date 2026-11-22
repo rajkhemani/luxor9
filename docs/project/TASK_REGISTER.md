@@ -6,9 +6,10 @@ Statuses: BACKLOG | DISCOVERY | PLANNED | AWAITING_APPROVAL | APPROVED | IN_PROG
 
 | ID | Phase | Title | Status | Risk | Role | Approval |
 |---|---|---|---|---|---|---|
-| P00-BASELINE | 00 | Discovery report + HOTL registers | IN_REVIEW | Low | TPM / Architect | Founder Phase 00 gate |
-| L9-FIX-COPILOT | 05/06 | CopilotChat agentId bind | IN_REVIEW (PR #5) | Low | Frontend Lead | GREEN (bugfix) |
-| L9-PLAN-VAL | 00 | Architecture validation plan | IN_REVIEW (PR #4) | Low | Architect | Founder review |
+| P00-BASELINE | 00 | Discovery report + HOTL registers | IN_REVIEW | Low | TPM / Architect | Founder Phase 00 gate (still open; shipping continued past it) |
+| L9-DUBAI-DEMO | 10 | Interview Me + B2B RE pitch tooling | IN_REVIEW | Amber | Backend / CMO / GTM | GREEN bugfix + founder merge |
+| L9-FIX-COPILOT | 05/06 | CopilotChat agentId bind | **VERIFIED** (merged #5) | Low | Frontend Lead | Merged 2026-11-10 |
+| L9-PLAN-VAL | 00 | Architecture validation plan | **ACCEPTED** (merged #4) | Low | Architect | Merged 2026-11-10 |
 
 ## Recommended next (awaiting founder choice)
 

@@ -55,6 +55,191 @@ def workflow_to_dict(wf: Workflow) -> dict:
     }
 
 
+async def create_interview_workflow(
+    db: AsyncSession,
+    principal: Principal,
+    objective: str,
+    context: dict,
+    pack: str = "cmo_re",
+) -> Workflow:
+    """Start a draft workflow during Interview Me — no blueprint yet."""
+    wf = Workflow(
+        tenant_id=principal.tenant_id,
+        created_by_user_id=principal.user_id,
+        pack=pack,
+        objective=objective,
+        status=WorkflowStatus.draft,
+        context=context,
+    )
+    db.add(wf)
+    await db.flush()
+    db.add(
+        WorkflowEvent(
+            tenant_id=principal.tenant_id,
+            workflow_id=wf.id,
+            event_type="interview.started",
+            payload={"skill": "interview_me"},
+        )
+    )
+    await emit_audit(
+        db,
+        tenant_id=principal.tenant_id,
+        actor_id=principal.user_id,
+        event_type="interview.started",
+        resource_type="workflow",
+        resource_id=wf.id,
+        payload={"objective": objective[:200]},
+    )
+    await db.commit()
+    return await get_workflow(db, principal.tenant_id, wf.id)  # type: ignore[return-value]
+
+
+async def save_workflow_context(
+    db: AsyncSession, tenant_id: str, workflow_id: str, context: dict
+) -> Workflow:
+    """Persist workflow context under row lock, merging interview safely.
+
+    Never wholesale-replace a context that already has ``interview_confirmed`` /
+    ``intent`` with a stale continue snapshot that would strip them.
+    """
+    result = await db.execute(
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.tenant_id == tenant_id)
+        .options(selectinload(Workflow.blueprint))
+        .with_for_update()
+    )
+    wf = result.scalar_one_or_none()
+    if wf is None:
+        raise ValueError("Workflow not found")
+    current = dict(wf.context or {})
+    incoming = dict(context or {})
+    if current.get("interview_confirmed") or current.get("intent"):
+        # Preserve confirmation artifacts; only refresh interview if still advancing.
+        skip = {"intent", "interview_confirmed"}
+        merged = {
+            **current,
+            **{k: v for k, v in incoming.items() if k not in skip},
+        }
+        if current.get("interview_confirmed"):
+            # Do not regress a confirmed interview with a stale questioning snapshot.
+            confirmed_phase = (current.get("interview") or {}).get("phase")
+            incoming_phase = (incoming.get("interview") or {}).get("phase")
+            if confirmed_phase == "confirmed" and incoming_phase not in {
+                None,
+                "confirmed",
+            }:
+                merged["interview"] = current.get("interview")
+            elif "interview" in incoming:
+                merged["interview"] = incoming["interview"]
+        elif "interview" in incoming:
+            merged["interview"] = incoming["interview"]
+        # Never invent confirmation — only preserve an explicit True already on disk.
+        if current.get("interview_confirmed") is True:
+            merged["interview_confirmed"] = True
+        elif "interview_confirmed" in current:
+            merged["interview_confirmed"] = bool(current.get("interview_confirmed"))
+        if current.get("intent") is not None:
+            merged["intent"] = current["intent"]
+        wf.context = merged
+    else:
+        wf.context = incoming
+    await db.commit()
+    return await get_workflow(db, tenant_id, workflow_id)  # type: ignore[return-value]
+
+
+async def attach_blueprint_after_interview(
+    db: AsyncSession,
+    principal: Principal,
+    workflow_id: str,
+    objective: str | None = None,
+) -> Workflow:
+    """Propose a blueprint only after Interview Me confirmation."""
+    from sqlalchemy.exc import IntegrityError
+
+    result = await db.execute(
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.tenant_id == principal.tenant_id)
+        .options(selectinload(Workflow.blueprint))
+        .with_for_update()
+    )
+    wf = result.scalar_one_or_none()
+    if wf is None:
+        raise ValueError("Workflow not found")
+    # Idempotent confirmation retry — return existing proposed blueprint.
+    if wf.blueprint is not None and wf.status == WorkflowStatus.awaiting_blueprint_approval:
+        return wf
+    if wf.status != WorkflowStatus.draft:
+        raise ValueError("Interview blueprint attach requires draft status")
+    if wf.blueprint is not None:
+        raise ValueError("Blueprint already exists")
+
+    ctx = dict(wf.context or {})
+    obj = objective or wf.objective
+    statement = (ctx.get("interview") or {}).get("statement") or {}
+    if statement.get("outcome"):
+        obj = str(statement["outcome"])
+    enriched = {
+        **ctx,
+        "interview_confirmed": True,
+        "intent": statement,
+    }
+    draft = cmo.build_blueprint(obj, enriched)
+    wf.objective = obj
+    wf.context = enriched
+    wf.status = WorkflowStatus.awaiting_blueprint_approval
+    bp = Blueprint(
+        tenant_id=principal.tenant_id,
+        workflow_id=wf.id,
+        status=BlueprintStatus.proposed,
+        title=draft["title"],
+        summary=draft["summary"],
+        plan=draft["plan"],
+    )
+    db.add(bp)
+    # Keep relationship in sync — expire_on_commit=False can leave a prior
+    # selectinload(None) cached on this identity otherwise.
+    wf.blueprint = bp
+    db.add(
+        WorkflowEvent(
+            tenant_id=principal.tenant_id,
+            workflow_id=wf.id,
+            event_type="blueprint.proposed",
+            payload={"title": bp.title, "via": "interview_me"},
+        )
+    )
+    await metering.emit_metering(
+        db,
+        tenant_id=principal.tenant_id,
+        event_name="workflow_run.created",
+        workflow_id=wf.id,
+        meta={"pack": wf.pack, "via": "interview_me"},
+    )
+    await emit_audit(
+        db,
+        tenant_id=principal.tenant_id,
+        actor_id=principal.user_id,
+        event_type="workflow.created",
+        resource_type="workflow",
+        resource_id=wf.id,
+        payload={"via": "interview_me"},
+    )
+    try:
+        await db.commit()
+    except IntegrityError:
+        # SQLite ignores FOR UPDATE; concurrent confirm can race the unique workflow_id.
+        await db.rollback()
+        existing = await get_workflow(db, principal.tenant_id, workflow_id)
+        if (
+            existing is not None
+            and existing.blueprint is not None
+            and existing.status == WorkflowStatus.awaiting_blueprint_approval
+        ):
+            return existing
+        raise
+    db.expire(wf, ["blueprint"])
+    return await get_workflow(db, principal.tenant_id, wf.id)  # type: ignore[return-value]
+
+
 async def create_workflow_with_blueprint(
     db: AsyncSession, principal: Principal, objective: str, context: dict, pack: str = "cmo_re"
 ) -> Workflow:
@@ -98,6 +283,7 @@ async def create_workflow_with_blueprint(
         tenant_id=principal.tenant_id,
         actor_id=principal.user_id,
         event_type="workflow.created",
+
         resource_type="workflow",
         resource_id=wf.id,
         payload={"objective": objective},
@@ -428,6 +614,12 @@ async def overview(db: AsyncSession, tenant_id: str) -> dict:
             WorkflowStatus.awaiting_blueprint_approval,
             WorkflowStatus.awaiting_action_approval,
         }
+        or (
+            w.status == WorkflowStatus.draft
+            and isinstance(w.context, dict)
+            and (w.context.get("interview") or {}).get("phase")
+            in {"questioning", "restate", "confirmed"}
+        )
     )
     completed = sum(1 for w in workflows if w.status == WorkflowStatus.completed)
     return {

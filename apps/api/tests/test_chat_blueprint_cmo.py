@@ -7,7 +7,12 @@ async def test_chat_blueprint_approve_runs_cmo(client):
         "/api/v1/chat",
         json={
             "message": "Need market and competitor intel for a Dubai creek residential launch",
-            "context": {"location": "Dubai", "product_type": "residential"},
+            "context": {
+                "location": "Dubai",
+                "product_type": "residential",
+                # Legacy path under test: blueprint approve / CMO run (skip interview).
+                "interview_guardrails": {"enabled": False},
+            },
         },
         headers={"X-Demo-User": "user_demo_admin"},
     )
@@ -48,7 +53,10 @@ async def test_chat_blueprint_approve_runs_cmo(client):
 async def test_blueprint_decline(client):
     chat = await client.post(
         "/api/v1/chat",
-        json={"message": "Quick competitor scan for Business Bay"},
+        json={
+            "message": "Quick competitor scan for Business Bay",
+            "context": {"interview_guardrails": {"enabled": False}},
+        },
         headers={"X-Demo-User": "user_demo_admin"},
     )
     wf_id = chat.json()["workflow"]["id"]

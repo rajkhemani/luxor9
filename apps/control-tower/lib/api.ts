@@ -13,6 +13,14 @@ function useLocalServerStore(): boolean {
   return !API_BASE && typeof window === "undefined";
 }
 
+/** Local/same-origin chat path — Interview Me gate, never draft-on-first-message. */
+export function localInterviewChat(message: string, workflowId?: string) {
+  return handleChatMessage(message, workflowId, {
+    location: "Dubai",
+    product_type: "residential",
+  });
+}
+
 export type Workflow = {
   id: string;
   tenant_id: string;
@@ -160,14 +168,22 @@ export const client = {
     useLocalServerStore() ? listAgents() : api<Record<string, unknown>>("/api/v1/agents"),
   chat: async (message: string, workflowId?: string) => {
     if (useLocalServerStore()) {
-      return handleChatMessage(message, workflowId, { location: "Dubai", product_type: "residential" });
+      // Same-origin / no API_BASE: still Interview Me — never draft-on-first-message.
+      return localInterviewChat(message, workflowId);
     }
     return api<{ reply: string; workflow: Workflow; awaiting: string | null }>("/api/v1/chat", {
       method: "POST",
       body: JSON.stringify({
         message,
         workflow_id: workflowId,
-        context: { location: "Dubai", product_type: "residential" },
+        context: {
+          location: "Dubai",
+          product_type: "residential",
+          // Category only — min/confidence gates come from API settings.
+          interview_guardrails: {
+            category: "b2b_real_estate",
+          },
+        },
       }),
     });
   },

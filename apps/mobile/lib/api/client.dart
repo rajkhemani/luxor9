@@ -67,7 +67,14 @@ class LuxorApi {
       body: jsonEncode({
         'message': message,
         'workflow_id': workflowId,
-        'context': {'location': 'Dubai', 'product_type': 'residential'},
+        'context': {
+          'location': 'Dubai',
+          'product_type': 'residential',
+          // Category only — min/confidence gates come from API settings.
+          'interview_guardrails': {
+            'category': 'b2b_real_estate',
+          },
+        },
       }),
     );
     _ensureOk(res);

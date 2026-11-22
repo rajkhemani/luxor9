@@ -12,4 +12,5 @@
 | D-007 | Primary pilot agent UI: classic Chat vs Copilot vs both | **OPEN** | 2026-11-10 | Founder choice |
 | D-008 | Run official CopilotKit onboard `bba95955d7ea` now? | **OPEN** | 2026-11-10 | Amber |
 | D-009 | First approved live research sources for Dubai RE | **OPEN** | 2026-11-10 | Amber integration |
-| D-010 | Next implementation ticket: L9-010 vs L9-012 | **OPEN** | 2026-11-10 | Phase 00 exit |
+| D-010 | Next implementation ticket: L9-010 vs L9-012 | **OPEN** | 2026-11-10 | Phase 00 exit; still required after 2026-11-22 register refresh |
+| D-011 | Accept post-Phase-00 shipping (Stack hub, /home, video guide, Dubai demo) without reopening discovery | **OPEN** | 2026-11-22 | Docs lag reality; founder amend-or-accept |
