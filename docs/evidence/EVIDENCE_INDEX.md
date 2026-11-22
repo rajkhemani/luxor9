@@ -10,6 +10,6 @@
 | E-MAIN-911b817 | `demo-store.ts`, `/api/v1/[...path]`, root `metadata.json` | 05 | In-memory Tower mode on main (offline/dev; not Dubai pitch) |
 | E-PR14 | https://github.com/rajkhemani/luxor9/pull/14 | 05/10 | Interview Me + B2B RE pitch tooling (open) |
 | E-D011-1 | `docs/project/DEMO_UX_VOICE_FIRST.md` + D-011 family in Decision Register | 05/10 | Founder demo UX choices (voice+chat, real backend, Interview Me, Phase 00 demo-ok) |
-| E-D012-1 | Decision Register conflict block for D-012 | 05/10 | Live Approve intent recorded; safe action still open |
+| E-D012-1 | Decision Register D-012 resolution | 05/10 | Approve = read-only live API call; real data on card |
 
 Screenshots from computer-use live under `/tmp/computer-use/` on the agent VM (not committed).

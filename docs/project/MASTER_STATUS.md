@@ -8,19 +8,19 @@
 
 ## Plain-English summary
 
-We are preparing a Dubai real-estate developer demo: **voice and chat**, Interview Me questions (PR #14), evidence answer, **one** card, **one** Approve. The pitch must use the **real cloud backend**. Phase 00 is good enough for demos; formal sign-off comes later. Approve must prove a **real live** backend action — but the **exact safe action is not chosen yet** (D-012 conflict with older sandbox-only rules).
+We are preparing a Dubai real-estate developer demo: **voice and chat**, Interview Me questions (PR #14), evidence answer, **one** card, **one** Approve. The pitch uses the **real cloud backend**. Phase 00 is good enough for demos; formal sign-off comes later. Approve runs a **read-only live API call** and shows real data on the card (**D-012 closed**).
 
 | Field | Value |
 |---|---|
 | Formal phase | Phase 00 ungated for HOTL ACCEPTED; **D-013** = ok for demos |
-| Hottest work | Dubai demo UX + land PR #14 + choose D-012 safe live Approve action |
-| Overall status | Demo decisions accepted; one blocking open question on live Approve |
+| Hottest work | Dubai demo UX + land PR #14 + **implement** L9-DEMO-APPROVE-LIVE (read-only live call) |
+| Overall status | Demo decisions accepted; D-012 resolved; implementation next |
 | What works on `main` | Thin CMO loop; synthetic research; sandbox publish adapter; Tower in-memory mode available |
 | What the pitch must use | Real API / cloud backend (D-011b), not in-memory mode |
-| Open security gap | Clerk JWKS unfinished; live Approve action unnamed |
-| Decisions just accepted | D-011, D-011a, D-011b, D-011c, D-013; D-012 intent with conflict |
+| Open security gap | Clerk JWKS unfinished |
+| Decisions just accepted | D-011, D-011a, D-011b, D-011c, **D-012** (read-only live Approve), D-013 |
 | Open PR of note | [#14](https://github.com/rajkhemani/luxor9/pull/14) Interview Me + B2B RE pitch |
-| Next human decision | Name the **one safe live action** for Approve (D-012) |
+| Next engineering step | Wire Approve → read-only live API → show real data on the card |
 
 ## Verified (so far)
 
@@ -33,7 +33,7 @@ We are preparing a Dubai real-estate developer demo: **voice and chat**, Intervi
 
 - Voice + chat excellent UX (approved; not fully built).
 - Interview Me on `main` (still PR #14).
-- Named safe live Approve action (blocked on founder choice).
+- Read-only live Approve wiring (D-012 chosen; code not done yet).
 - Live research quality; Postgres checkpointer resume; Playwright e2e.
 
 ## Completeness (rough)
@@ -42,5 +42,5 @@ We are preparing a Dubai real-estate developer demo: **voice and chat**, Intervi
 |---|---|---|
 | Product | Thin slice | Loop exists; pitch UX still being locked |
 | Engineering | Foundation partial | Monolith + Tower + AG-UI |
-| Security | Pre-pilot | Demo auth; live Approve path unresolved |
+| Security | Pre-pilot | Demo auth; Approve is read-only live call only |
 | Deploy | Local / draft | Production stays RED without founder approval |

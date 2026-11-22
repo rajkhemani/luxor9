@@ -2,7 +2,7 @@
 
 ## Product one-liner
 
-**Luxor9 for Real-Estate Developers** — speak or chat a development brief → Interview Me clarifies → agents gather evidence → one automation card → Approve proves a **real live** backend connection (exact safe action still being chosen — see D-012).
+**Luxor9 for Real-Estate Developers** — speak or chat a development brief → Interview Me clarifies → agents gather evidence → one automation card → Approve runs a **read-only live API call** and shows real data on the card (D-012).
 
 ## Thin stack
 
@@ -37,7 +37,7 @@ Detail: `docs/project/DEMO_UX_VOICE_FIRST.md`.
 2. **Interview Me (PR #14)** asks clarifying questions before a plan is built.
 3. Show the evidence-based answer (sources + `UNVERIFIED` gaps).
 4. Show **one** automation card with **one** Approve button.
-5. Approve → must hit the **real live backend** with the **named safe action** from D-012 (not chosen yet — do not claim CRM/ERP/ad spend until named).
+5. Approve → **read-only live API call** on the real backend; show the real data returned on the card (D-012). No CRM/ERP write. No paid ads.
 
 ## Production-ish deploy (Docker)
 
@@ -55,7 +55,7 @@ Hardening before first external pilot:
 - [ ] Upgrade Clerk Pro + MFA before consequential human approvers
 - [ ] Change Postgres password; backups on
 - [ ] TLS termination (Render/Fly/Cloudflare/nginx)
-- [ ] Resolve D-012: name the one safe live Approve action before promising it in sales
+- [ ] Confirm Approve’s read-only live call is Trust-logged and demo-safe
 
 ## Mobile for tomorrow’s hallway demo
 
@@ -67,12 +67,12 @@ flutter run -d ios --dart-define=API_BASE_URL=http://<your-lan-ip>:8000
 # or Android emulator: http://10.0.2.2:8000
 ```
 
-## What not to claim in GTM (until D-012 names otherwise)
+## What not to claim in GTM
 
-- Live CRM or ERP **production** writes
+- Live CRM or ERP **writes**
 - Real paid ad spend
 - Guaranteed ROI
 - Full C-suite executives (CMO pack only; others are roadmap stubs)
 - Production Clerk SSO until JWKS path is finished
 
-**Conflict flag:** D-012 says Approve must prove a real live backend action. That does **not** automatically mean CRM, ERP, or ad spend. Wait for the named safe action.
+**What you *can* claim for Approve (D-012):** pressing Approve hits the live backend with a **read-only** call and shows real data on the card.
