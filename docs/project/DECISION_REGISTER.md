@@ -17,7 +17,7 @@ Plain list of big choices. **Accepted** means we agreed. **OPEN** means we still
 | D-010 | Next foundation ticket: L9-010 (JWKS) vs L9-012 (CopilotKit onboard) | **OPEN** | 2026-11-10 | Phase 00 exit hygiene |
 | D-011 | Dubai demo core: speak/type → multi-agent evidence → one automation card + one Approve | **Accepted** (demo) | 2026-11-22 | See `DEMO_UX_VOICE_FIRST.md`; Approve action = **D-012** |
 | D-011a | Demo UX quality: **both voice and chat**; experience must be excellent | **Accepted** | 2026-11-22 | Extends D-011; Approve proof = **D-012** |
-| D-011b | Demo runs on the **real cloud backend**, not Control Tower in-memory mode | **Accepted** | 2026-11-22 | In-memory path (`911b817`) offline/dev only; live Approve = **D-012** |
+| D-011b | **Customer pitch** uses the **real cloud API**; not Control Tower in-memory mode | **Accepted** | 2026-11-22 | Local FastAPI+Postgres = rehearsal only; in-memory Tower (`911b817`) = offline/dev; live Approve = **D-012** |
 | D-011c | Use open PR #14 **Interview Me** (ask questions before the plan) | **Accepted** | 2026-11-22 | Merge/land #14 needed; Approve after card = **D-012** |
 | D-012 | Approve runs a **read-only live API call** and shows real data back on the card | **Accepted** (resolved) | 2026-11-22 | Proves real backend connection. **Not** CRM/ERP writes. **Not** paid ad spend. Closed the earlier sandbox-only conflict for this demo path. |
 | D-013 | Phase 00 is **approved enough for demos**; formal written sign-off comes later | **Accepted** (demo authority only) | 2026-11-22 | Phase 00 not fully ACCEPTED in HOTL sense |

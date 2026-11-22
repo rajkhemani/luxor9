@@ -12,32 +12,48 @@
 | Web Control Tower | `apps/control-tower` | 3000 |
 | Mobile (iOS/Android) | `apps/mobile` | device/emulator |
 
-**Pitch rule (D-011b):** use the **real cloud / local API backend**. Do **not** pitch with Control Tower in-memory demo mode (empty `NEXT_PUBLIC_API_BASE_URL`).
+**Pitch rule (D-011b):** the **customer-facing Dubai pitch** uses the **real cloud API** (a deployed FastAPI URL). Do **not** use Control Tower in-memory demo mode (empty `NEXT_PUBLIC_API_BASE_URL`). Local FastAPI is for **rehearsal only**.
 
-## Local pitch (15 minutes)
+Canonical demo UX: `docs/project/DEMO_UX_VOICE_FIRST.md`. Older scripts in `docs/MOBILE.md` and `docs/PILOT_PACKAGING.md` are **legacy** for this pitch.
+
+## A) Customer pitch (cloud backend)
 
 ```bash
-make api-install && make api-dev          # terminal 1 — required
-make ui-install && make ui-dev            # terminal 2
-# Ensure NEXT_PUBLIC_API_BASE_URL points at the API (e.g. http://127.0.0.1:8000)
+# Point Tower at the deployed API (example):
+export NEXT_PUBLIC_API_BASE_URL='https://api.your-domain.com'
+export AGUI_CMO_URL='https://api.your-domain.com/api/v1/agui/cmo'
+export API_CORS_ORIGINS='https://app.your-domain.com'
+
+make ui-install && make ui-dev
 ```
 
-Optional one-click seed (still useful; does not replace Interview Me for the spoken path):
+`make ui-dev` keeps your exported `NEXT_PUBLIC_API_BASE_URL` (it no longer forces localhost).
+
+### Talk track
+
+1. Speak **or** type: “Market-to-launch intelligence for a Dubai Creek Harbour residential tower, AED 2.5–6M, Q2.”
+2. **Interview Me (PR #14)** asks clarifying questions before a plan is built.
+3. Show the answer. Say clearly: research fixtures are **synthetic** until live sources (L9-013); claims stay **UNVERIFIED** — do not present them as real Dubai market facts.
+4. Show **one** automation card with **one** Approve button.
+5. Approve → **read-only live API call** on the cloud backend; show the real data returned on the card (D-012). No CRM/ERP write. No paid ads.
+
+## B) Local rehearsal (real FastAPI + Postgres — not in-memory Tower)
+
+```bash
+make compose-up                                   # Postgres
+# Set DATABASE_URL to the Compose Postgres URL from .env.example / compose file
+make api-install && make api-dev                  # terminal 1
+make ui-install && make ui-dev                    # terminal 2 → defaults to http://127.0.0.1:8000
+```
+
+Optional one-click seed (rehearsal only; skips Interview Me):
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/api/v1/demo/run \
   -H 'X-Demo-User: user_demo_admin' -H 'Content-Type: application/json'
 ```
 
-### Live demo script (D-011 family)
-
-Detail: `docs/project/DEMO_UX_VOICE_FIRST.md`.
-
-1. Speak **or** type: “Market-to-launch intelligence for a Dubai Creek Harbour residential tower, AED 2.5–6M, Q2.”
-2. **Interview Me (PR #14)** asks clarifying questions before a plan is built.
-3. Show the evidence-based answer (sources + `UNVERIFIED` gaps).
-4. Show **one** automation card with **one** Approve button.
-5. Approve → **read-only live API call** on the real backend; show the real data returned on the card (D-012). No CRM/ERP write. No paid ads.
+**Do not retry** `demo/run` if the first call may have succeeded — each retry creates another workflow/approval and breaks the “one card” demo. If extras appear, clear them before presenting.
 
 ## Production-ish deploy (Docker)
 
@@ -57,18 +73,18 @@ Hardening before first external pilot:
 - [ ] TLS termination (Render/Fly/Cloudflare/nginx)
 - [ ] Confirm Approve’s read-only live call is Trust-logged and demo-safe
 
-## Mobile for tomorrow’s hallway demo
+## Mobile for hallway rehearsal
 
-Mac + Xcode required for iPhone. See `docs/MOBILE.md`.
+Mac + Xcode required for iPhone. See `docs/MOBILE.md` (legacy path noted there). Prefer the voice+chat web flow in `DEMO_UX_VOICE_FIRST.md` for the Dubai pitch.
 
 ```bash
 cd apps/mobile
 flutter run -d ios --dart-define=API_BASE_URL=http://<your-lan-ip>:8000
-# or Android emulator: http://10.0.2.2:8000
 ```
 
 ## What not to claim in GTM
 
+- Synthetic research as real Dubai market evidence (say **UNVERIFIED** / fixture)
 - Live CRM or ERP **writes**
 - Real paid ad spend
 - Guaranteed ROI

@@ -114,12 +114,14 @@ async def run_specialist(agent_key: str, objective: str, context: dict) -> dict:
     sources = await research.fetch_public_sources(objective, topic)
     claims = []
     for src in sources:
+        # Synthetic research fixtures must never present as VERIFIED Dubai evidence.
         claims.append(
             {
                 "claim_text": src["excerpt"][:240],
                 "claim_type": topic.split()[0],
-                "status": "VERIFIED",
-                "confidence": 0.7,
+                "status": "UNVERIFIED",
+                "confidence": 0.4,
+                "reason": "synthetic_fixture_pending_live_adapter",
                 "source": src,
             }
         )

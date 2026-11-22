@@ -56,9 +56,11 @@ Android emulator loopback: `http://10.0.2.2:8000`.
 
 ## Winning demo path (same on web + mobile)
 
+> **Legacy for the Dubai customer pitch.** Prefer `docs/project/DEMO_UX_VOICE_FIRST.md` (voice + chat, Interview Me, read-only live Approve on cloud).
+
 1. Chat → objective (Dubai RE launch)
 2. Approve blueprint
-3. See report / evidence in Tower
-4. Approvals → sandbox campaign publish
+3. See report / evidence in Tower (fixture claims are **UNVERIFIED**)
+4. Approvals → sandbox campaign publish (older path; not D-012)
 
 No Clerk JWKS required in development (`X-Demo-User` / demo headers).
