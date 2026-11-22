@@ -10,3 +10,5 @@
 | R-006 | Scope explosion (C-suite, Celery, Intelligence) | Medium | High | Watch | HOTL phase gates; DEFERRED register |
 | R-007 | Sibling monorepo merge temptation | Medium | Medium | Watch | Inventory-only without ADR |
 | R-008 | Production deploy without RED approval | Critical | Low | Controlled | Explicit founder gate Phase 13 |
+| R-009 | Cloud demo boot exposes demo-auth API beyond loopback | High | Medium | Mitigated (2026-11-22) | `cloud-start.sh` defaults to 127.0.0.1; override only in trusted sandboxes |
+| R-010 | Interview Me `yes` mis-routed as blueprint approval | High | Medium | Mitigated (2026-11-22) | Approve path ignores yes during questioning/restate; exact yes for confirm |
