@@ -197,6 +197,16 @@ async def _continue_interview(
         raise HTTPException(status_code=404, detail="Workflow not found")
     _ensure_interview_actor(wf, principal)
     ctx = dict(wf.context or {})
+    # Already confirmed + blueprint proposed: treat as post-interview chat path.
+    if ctx.get("interview_confirmed") and wf.blueprint is not None:
+        return ChatMessageResponse(
+            reply=(
+                "Intent is already confirmed and a blueprint is proposed. "
+                "Reply **approve** to dispatch, or **decline** to cancel."
+            ),
+            workflow=WorkflowOut(**workflow_service.workflow_to_dict(wf)),
+            awaiting="blueprint_approval",
+        )
     interview_state = dict(ctx.get("interview") or {})
     try:
         guardrails = resolve_guardrails(ctx)
@@ -205,6 +215,7 @@ async def _continue_interview(
     engine = InterviewEngine(guardrails)
     result = engine.continue_(interview_state, message)
     ctx["interview"] = result.state
+    # save_workflow_context re-locks and merges so a concurrent confirm cannot be wiped.
     wf = await workflow_service.save_workflow_context(db, principal.tenant_id, workflow_id, ctx)
 
     if result.ready_for_automation:

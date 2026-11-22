@@ -97,6 +97,11 @@ async def create_interview_workflow(
 async def save_workflow_context(
     db: AsyncSession, tenant_id: str, workflow_id: str, context: dict
 ) -> Workflow:
+    """Persist workflow context under row lock, merging interview safely.
+
+    Never wholesale-replace a context that already has ``interview_confirmed`` /
+    ``intent`` with a stale continue snapshot that would strip them.
+    """
     result = await db.execute(
         select(Workflow)
         .where(Workflow.id == workflow_id, Workflow.tenant_id == tenant_id)
@@ -106,7 +111,27 @@ async def save_workflow_context(
     wf = result.scalar_one_or_none()
     if wf is None:
         raise ValueError("Workflow not found")
-    wf.context = context
+    current = dict(wf.context or {})
+    incoming = dict(context or {})
+    if current.get("interview_confirmed") or current.get("intent"):
+        # Preserve confirmation artifacts; only refresh interview if still advancing.
+        merged = {**current, **{k: v for k, v in incoming.items() if k not in {"intent", "interview_confirmed"}}}
+        if current.get("interview_confirmed"):
+            # Do not regress a confirmed interview with a stale questioning snapshot.
+            confirmed_phase = (current.get("interview") or {}).get("phase")
+            incoming_phase = (incoming.get("interview") or {}).get("phase")
+            if confirmed_phase == "confirmed" and incoming_phase not in {None, "confirmed"}:
+                merged["interview"] = current.get("interview")
+            elif "interview" in incoming:
+                merged["interview"] = incoming["interview"]
+        elif "interview" in incoming:
+            merged["interview"] = incoming["interview"]
+        merged["interview_confirmed"] = current.get("interview_confirmed", True)
+        if current.get("intent") is not None:
+            merged["intent"] = current["intent"]
+        wf.context = merged
+    else:
+        wf.context = incoming
     await db.commit()
     return await get_workflow(db, tenant_id, workflow_id)  # type: ignore[return-value]
 
@@ -118,6 +143,8 @@ async def attach_blueprint_after_interview(
     objective: str | None = None,
 ) -> Workflow:
     """Propose a blueprint only after Interview Me confirmation."""
+    from sqlalchemy.exc import IntegrityError
+
     result = await db.execute(
         select(Workflow)
         .where(Workflow.id == workflow_id, Workflow.tenant_id == principal.tenant_id)
@@ -185,7 +212,19 @@ async def attach_blueprint_after_interview(
         resource_id=wf.id,
         payload={"via": "interview_me"},
     )
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # SQLite ignores FOR UPDATE; concurrent confirm can race the unique workflow_id.
+        await db.rollback()
+        existing = await get_workflow(db, principal.tenant_id, workflow_id)
+        if (
+            existing is not None
+            and existing.blueprint is not None
+            and existing.status == WorkflowStatus.awaiting_blueprint_approval
+        ):
+            return existing
+        raise
     db.expire(wf, ["blueprint"])
     return await get_workflow(db, principal.tenant_id, wf.id)  # type: ignore[return-value]
 

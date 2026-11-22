@@ -6,15 +6,26 @@ confidence gate, explicit yes before any downstream work).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
 from app.skills.interview_me.guardrails import InterviewGuardrails
-from app.skills.interview_me.templates import questions_for
+from app.skills.interview_me.templates import InterviewQuestion, questions_for
 
 _YES = {"yes", "yes.", "y", "confirm", "confirmed", "looks right", "that's right", "thats right"}
 _NO = {"no", "no.", "n", "refine", "not quite", "wrong"}
 _MIN_ANSWER_LEN = 3
+
+# Longer markers first so "out of scope is" wins over shorter overlaps.
+_FIELD_MARKERS: list[tuple[str, tuple[str, ...]]] = [
+    ("out_of_scope", ("out of scope is", "out of scope:", "not doing")),
+    ("outcome", ("outcome is", "outcome:")),
+    ("constraint", ("constraint:", "constraint is", "sandbox", "no live")),
+    ("success", ("success is", "success:", "evidence")),
+    ("user", ("for our", "sales", "marketing", "c-suite")),
+    ("why_now", ("why now", "why now:")),
+]
 
 
 @dataclass
@@ -42,8 +53,8 @@ def _bump_confidence(state: dict[str, Any], guardrails: InterviewGuardrails) -> 
             if isinstance(v, str) and len(v.strip()) >= _MIN_ANSWER_LEN
         ]
     )
-    # Confidence rises only from substantive answers + filled intent fields.
-    base = 25 + len(substantive) * 15 + filled * 8
+    # 3 substantive answers + 3 filled fields → 25+45+30 = 100 (≥ default 95).
+    base = 25 + len(substantive) * 15 + filled * 10
     return min(99, base)
 
 
@@ -72,24 +83,39 @@ def _format_restate(statement: dict[str, str], confidence: int) -> str:
     )
 
 
-def _apply_keyword_fields(statement: dict[str, str], message: str, *, overwrite: bool) -> None:
+def _extract_marked_value(message: str, markers: tuple[str, ...]) -> str | None:
     lower = message.lower()
-    text = message.strip()
+    for marker in markers:
+        idx = lower.find(marker)
+        if idx < 0:
+            continue
+        start = idx + len(marker)
+        rest = message[start:].lstrip(" :—-")
+        # Cut at the next field marker if present.
+        cut = len(rest)
+        rest_lower = rest.lower()
+        for _key, other_markers in _FIELD_MARKERS:
+            for other in other_markers:
+                if other == marker:
+                    continue
+                pos = rest_lower.find(other)
+                if pos >= 0:
+                    cut = min(cut, pos)
+        value = rest[:cut].strip(" ;\n\t")
+        # Strip trailing conjunctions left by multi-field notes.
+        value = re.sub(r"[;\s]+$", "", value)
+        if len(value) >= _MIN_ANSWER_LEN:
+            return value
+    return None
 
-    def set_field(key: str) -> None:
+
+def _apply_keyword_fields(statement: dict[str, str], message: str, *, overwrite: bool) -> None:
+    for key, markers in _FIELD_MARKERS:
+        extracted = _extract_marked_value(message, markers)
+        if extracted is None:
+            continue
         if overwrite or not statement.get(key):
-            statement[key] = text
-
-    if "outcome is" in lower or "outcome:" in lower:
-        set_field("outcome")
-    if "sandbox" in lower or "no live" in lower:
-        set_field("constraint")
-    if "out of scope" in lower or "not doing" in lower:
-        set_field("out_of_scope")
-    if "success" in lower or "evidence" in lower:
-        set_field("success")
-    if "for our" in lower or "sales" in lower or "marketing" in lower or "c-suite" in lower:
-        set_field("user")
+            statement[key] = extracted
 
 
 def _ingest_answer(
@@ -100,7 +126,10 @@ def _ingest_answer(
     state["answers"] = answers
     statement = dict(state.get("statement") or {})
     if field:
-        statement[field] = message.strip()
+        # Prefer an explicit "field is …" extraction when present; else whole answer.
+        markers = next((m for k, m in _FIELD_MARKERS if k == field), ())
+        extracted = _extract_marked_value(message, markers) if markers else None
+        statement[field] = extracted or message.strip()
     _apply_keyword_fields(statement, message, overwrite=overwrite)
     state["statement"] = statement
 
@@ -110,6 +139,13 @@ class InterviewEngine:
         self.guardrails = guardrails
         self.questions = questions_for(guardrails.category)
         self.effective_min = min(guardrails.min_questions, max(1, len(self.questions)))
+        self._by_id = {q.id: q for q in self.questions}
+
+    def _pending_question(self, state: dict[str, Any]) -> InterviewQuestion | None:
+        asked_ids = list(state.get("asked_ids") or [])
+        if not asked_ids:
+            return None
+        return self._by_id.get(asked_ids[-1])
 
     def start(self, objective: str) -> InterviewResult:
         q0 = self.questions[0]
@@ -157,6 +193,54 @@ class InterviewEngine:
                 ready_for_automation=True,
             )
         return InterviewResult(reply=reply, awaiting="interview_confirm", state=state)
+
+    def _advance_after_answer(self, state: dict[str, Any]) -> InterviewResult:
+        state["confidence"] = _bump_confidence(state, self.guardrails)
+        asked_ids = list(state.get("asked_ids") or [])
+        asked_n = int(state.get("questions_asked", 0))
+
+        can_stop = (
+            asked_n >= self.effective_min
+            and int(state["confidence"]) >= self.guardrails.confidence_threshold
+        )
+        if asked_n >= self.guardrails.max_questions:
+            can_stop = True
+
+        if can_stop:
+            return self._enter_restate(state)
+
+        next_q = next((q for q in self.questions if q.id not in asked_ids), None)
+        if next_q is None:
+            if (
+                asked_n >= self.effective_min
+                and int(state["confidence"]) >= self.guardrails.confidence_threshold
+            ) or asked_n >= self.guardrails.max_questions:
+                return self._enter_restate(state)
+            state["pending_field"] = None
+            state["phase"] = "questioning"
+            reply = (
+                "I still need clearer intent before confirming. "
+                "In one short paragraph, who is this for, what success looks like, "
+                "and any hard constraints?"
+            )
+            return InterviewResult(reply=reply, awaiting="interview_answer", state=state)
+
+        asked_ids.append(next_q.id)
+        state["asked_ids"] = asked_ids
+        state["questions_asked"] = asked_n + 1
+        state["pending_field"] = next_q.field
+        state["phase"] = "questioning"
+        reason = "still clarifying remaining intent fields"
+        if int(state["confidence"]) >= 70:
+            reason = ""
+        reply = _format_question(
+            next_q.prompt,
+            next_q.guess,
+            state.get("hypothesis", ""),
+            int(state["confidence"]),
+            reason,
+        )
+        return InterviewResult(reply=reply, awaiting="interview_answer", state=state)
 
     def continue_(self, state: dict[str, Any], message: str) -> InterviewResult:
         state = dict(state)
@@ -230,7 +314,21 @@ class InterviewEngine:
             reply = _format_restate(state.get("statement") or {}, int(state["confidence"]))
             return InterviewResult(reply=reply, awaiting="interview_confirm", state=state)
 
-        # Normal Q&A turn — reject whitespace-only answers.
+        # Questioning: yes/no accept or reject the current GUESS (never store "yes"/"no").
+        pending_q = self._pending_question(state)
+        if lower in _YES and pending_q is not None:
+            _ingest_answer(state, pending_q.guess, pending_q.field)
+            return self._advance_after_answer(state)
+        if lower in _NO and pending_q is not None:
+            reply = (
+                "Understood — that guess was wrong. Give a short substantive answer "
+                f"for: {pending_q.field}\n\n"
+                f"Q: {pending_q.prompt}\n"
+                f"GUESS: {pending_q.guess}"
+            )
+            return InterviewResult(reply=reply, awaiting="interview_answer", state=state)
+
+        # Normal Q&A turn — reject whitespace-only / too-short answers.
         if len(text) < _MIN_ANSWER_LEN:
             reply = (
                 "I need a short substantive answer (at least a few words) before we continue.\n\n"
@@ -240,53 +338,4 @@ class InterviewEngine:
 
         pending = state.get("pending_field")
         _ingest_answer(state, text, pending)
-        state["confidence"] = _bump_confidence(state, self.guardrails)
-        asked_ids = list(state.get("asked_ids") or [])
-        asked_n = int(state.get("questions_asked", 0))
-
-        can_stop = (
-            asked_n >= self.effective_min
-            and int(state["confidence"]) >= self.guardrails.confidence_threshold
-        )
-        # Soft stop at max questions
-        if asked_n >= self.guardrails.max_questions:
-            can_stop = True
-
-        if can_stop:
-            return self._enter_restate(state)
-
-        # Next question
-        next_q = next((q for q in self.questions if q.id not in asked_ids), None)
-        if next_q is None:
-            # Templates exhausted: only restate when gates (effective min + confidence) pass,
-            # otherwise solicit a free-form clarification.
-            if (
-                asked_n >= self.effective_min
-                and int(state["confidence"]) >= self.guardrails.confidence_threshold
-            ) or asked_n >= self.guardrails.max_questions:
-                return self._enter_restate(state)
-            state["pending_field"] = None
-            state["phase"] = "questioning"
-            reply = (
-                "I still need clearer intent before confirming. "
-                "In one short paragraph, who is this for, what success looks like, "
-                "and any hard constraints?"
-            )
-            return InterviewResult(reply=reply, awaiting="interview_answer", state=state)
-
-        asked_ids.append(next_q.id)
-        state["asked_ids"] = asked_ids
-        state["questions_asked"] = asked_n + 1
-        state["pending_field"] = next_q.field
-        state["phase"] = "questioning"
-        reason = "still clarifying remaining intent fields"
-        if int(state["confidence"]) >= 70:
-            reason = ""
-        reply = _format_question(
-            next_q.prompt,
-            next_q.guess,
-            state.get("hypothesis", ""),
-            int(state["confidence"]),
-            reason,
-        )
-        return InterviewResult(reply=reply, awaiting="interview_answer", state=state)
+        return self._advance_after_answer(state)

@@ -7,8 +7,8 @@ from app.skills.interview_me.guardrails import InterviewGuardrails, resolve_guar
 
 
 @pytest.mark.asyncio
-async def test_yes_during_questioning_stays_in_interview(client):
-    """Bare 'yes' while interviewing must not hit blueprint approval."""
+async def test_yes_during_questioning_accepts_guess_not_blueprint(client):
+    """Bare 'yes' accepts the GUESS for the pending field — never drafts a blueprint."""
     first = await client.post(
         "/api/v1/chat",
         json={"message": "Automate my Dubai launch marketing"},
@@ -17,6 +17,7 @@ async def test_yes_during_questioning_stays_in_interview(client):
     assert first.status_code == 200
     wf_id = first.json()["workflow"]["id"]
     assert first.json()["awaiting"] == "interview_answer"
+    pending = first.json()["workflow"]["context"]["interview"]["pending_field"]
 
     yes = await client.post(
         "/api/v1/chat",
@@ -27,8 +28,44 @@ async def test_yes_during_questioning_stays_in_interview(client):
     body = yes.json()
     assert body["workflow"]["status"] == "draft"
     assert body["workflow"]["blueprint"] is None
-    assert body["awaiting"] == "interview_answer"
-    assert body["workflow"]["context"]["interview"]["phase"] == "questioning"
+    assert body["awaiting"] in {"interview_answer", "interview_confirm"}
+    interview = body["workflow"]["context"]["interview"]
+    assert interview["phase"] in {"questioning", "restate"}
+    statement = interview["statement"]
+    assert pending in statement
+    assert statement[pending].lower() != "yes"
+    assert len(statement[pending]) > 3
+
+
+def test_no_during_questioning_rejects_guess_without_storing_no():
+    engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
+    started = engine.start("Automate Dubai launch")
+    pending = started.state["pending_field"]
+    result = engine.continue_(started.state, "no")
+    assert result.awaiting == "interview_answer"
+    assert result.state["phase"] == "questioning"
+    assert result.state["pending_field"] == pending
+    assert "no" not in str((result.state.get("statement") or {}).get(pending, "")).lower()
+    assert result.state["questions_asked"] == 1
+
+
+def test_three_substantive_answers_reach_restate_at_default_threshold():
+    """Default gates: three Q&A turns that fill three fields must enter restate."""
+    engine = InterviewEngine(InterviewGuardrails())  # min=3, threshold=95
+    state = engine.start("Automate Dubai launch").state
+    answers = [
+        "For our sales and marketing launch team.",
+        "Success is an evidence-backed launch pack with gaps flagged.",
+        "Constraint: sandbox only, no live ad spend.",
+    ]
+    result = None
+    for answer in answers:
+        result = engine.continue_(state, answer)
+        state = result.state
+    assert result is not None
+    assert result.awaiting == "interview_confirm"
+    assert result.state["phase"] == "restate"
+    assert int(result.state["confidence"]) >= 95
 
 
 def test_restate_yes_prefix_is_refinement_not_confirm():
@@ -311,7 +348,7 @@ def test_resolve_guardrails_rejects_fractional_and_non_mapping():
         resolve_guardrails({"interview_guardrails": ["not", "a", "mapping"]})
 
 
-def test_refinement_overwrites_statement_fields():
+def test_refinement_parses_field_values_not_whole_utterance():
     engine = InterviewEngine(InterviewGuardrails(min_questions=2, confidence_threshold=80))
     state = {
         "phase": "restate",
@@ -323,7 +360,7 @@ def test_refinement_overwrites_statement_fields():
             "why_now": "Q2",
             "success": "evidence",
             "constraint": "sandbox",
-            "out_of_scope": "live ads",
+            "out_of_scope": "old scope",
         },
         "objective": "Automate Dubai launch",
         "asked_ids": ["re_who", "re_outcome", "re_success"],
@@ -337,6 +374,10 @@ def test_refinement_overwrites_statement_fields():
         "Yes — outcome is market/competitor launch pack; out of scope is live ads.",
     )
     assert result.state["phase"] == "restate"
-    assert "market/competitor" in result.state["statement"]["outcome"].lower() or (
-        "market/competitor" in result.reply.lower()
-    )
+    outcome = result.state["statement"]["outcome"]
+    oos = result.state["statement"]["out_of_scope"]
+    assert "market/competitor launch pack" in outcome.lower()
+    assert "live ads" in oos.lower()
+    assert "out of scope" not in outcome.lower()
+    assert outcome != oos
+    assert "Yes —" not in outcome
