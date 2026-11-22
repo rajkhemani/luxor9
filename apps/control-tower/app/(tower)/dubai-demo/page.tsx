@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   previewDubaiApproveLiveRead,
   resetDemoState,
@@ -17,7 +17,7 @@ const SPEAK_BRIEF =
 const INTERVIEW_Q =
   "Interview Me — before I plan: is the primary buyer segment GCC HNW end-users, South Asian investors, or both?";
 
-function loadSeed() {
+function loadSeed(): DubaiApproveLiveDisplay {
   resetDemoState();
   return previewDubaiApproveLiveRead();
 }
@@ -34,14 +34,18 @@ export default function DubaiDemoPreviewPage() {
   const [segment, setSegment] = useState("");
   const [live, setLive] = useState<DubaiApproveLiveDisplay | null>(null);
   const [busy, setBusy] = useState(false);
-  const [seed] = useState(loadSeed);
+  const [seed, setSeed] = useState<DubaiApproveLiveDisplay | null>(null);
+
+  useEffect(() => {
+    setSeed(loadSeed());
+  }, []);
 
   function push(role: Msg["role"], text: string) {
     setMessages((m) => [...m, { role, text }]);
   }
 
   function startBrief(text: string) {
-    if (busy || stage !== "idle") return;
+    if (busy || stage !== "idle" || !seed) return;
     setBusy(true);
     push("user", text);
     window.setTimeout(() => {
@@ -52,7 +56,7 @@ export default function DubaiDemoPreviewPage() {
   }
 
   function answerInterview(choice: string) {
-    if (busy || stage !== "interview") return;
+    if (busy || stage !== "interview" || !seed) return;
     setBusy(true);
     setSegment(choice);
     push("user", choice);
@@ -86,8 +90,8 @@ export default function DubaiDemoPreviewPage() {
       "Approve pressed → mock D-012 read-only live call (display only). No outbound send.",
     );
     window.setTimeout(() => {
-      resetDemoState();
-      const payload = previewDubaiApproveLiveRead();
+      const payload = loadSeed();
+      setSeed(payload);
       setLive(payload);
       setStage("live_display");
       push(
@@ -99,7 +103,7 @@ export default function DubaiDemoPreviewPage() {
   }
 
   function onReset() {
-    resetDemoState();
+    setSeed(loadSeed());
     setStage("idle");
     setLive(null);
     setSegment("");
@@ -145,7 +149,7 @@ export default function DubaiDemoPreviewPage() {
 
         {stage === "idle" && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            <button type="button" disabled={busy} onClick={() => startBrief(SPEAK_BRIEF)}>
+            <button type="button" disabled={busy || !seed} onClick={() => startBrief(SPEAK_BRIEF)}>
               Speak brief
             </button>
             <form className="composer" onSubmit={onTypeSubmit} style={{ flex: 1, minWidth: 220 }}>
@@ -153,9 +157,9 @@ export default function DubaiDemoPreviewPage() {
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 placeholder="Or type a Dubai brief…"
-                disabled={busy}
+                disabled={busy || !seed}
               />
-              <button type="submit" disabled={busy || !typed.trim()}>
+              <button type="submit" disabled={busy || !seed || !typed.trim()}>
                 Send
               </button>
             </form>
@@ -197,7 +201,7 @@ export default function DubaiDemoPreviewPage() {
             <ul className="muted" style={{ paddingLeft: "1.1rem" }}>
               <li>Channel: sandbox preview (mock)</li>
               <li>Action binding: campaign.publish.read_only_live_display</li>
-              <li>Resource: {seed.approval?.resource_id ?? "creek_harbour_q2"}</li>
+              <li>Resource: {seed?.approval?.resource_id ?? "creek_harbour_q2"}</li>
             </ul>
             {stage === "card" && (
               <button type="button" disabled={busy} onClick={onApprove}>
@@ -242,7 +246,7 @@ export default function DubaiDemoPreviewPage() {
                   {live.evidence.map((e) => (
                     <li key={e.source_id}>
                       {e.title}
-                      <div className="muted">{e.excerpts[0]}</div>
+                      <div className="muted">{e.excerpts[0] ?? ""}</div>
                     </li>
                   ))}
                 </ul>
