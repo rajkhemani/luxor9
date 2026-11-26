@@ -47,6 +47,14 @@ export const LUXOR_CAPABILITIES: LuxorCapability[] = [
     upstreamRef: "Copilot / CopilotKit chat",
   },
   {
+    id: "voice-bridge",
+    label: "Voice Bridge",
+    blurb: "Full-duplex voice AI with configurable VAD sensitivity and instant barge-in.",
+    status: "live",
+    href: "/voice",
+    upstreamRef: "Silero VAD + full-duplex voice runtime",
+  },
+  {
     id: "coworker-hub",
     label: "Coworker Hub",
     blurb: "Self-hostable multi-bot workspace shell on the same AG-UI CMO endpoint.",

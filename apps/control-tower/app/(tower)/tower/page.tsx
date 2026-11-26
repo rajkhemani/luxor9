@@ -34,6 +34,11 @@ export default async function OverviewPage() {
         <Link href="/command">
           <button type="button">Command Bridge</button>
         </Link>
+        <Link href="/voice">
+          <button type="button" className="secondary">
+            Voice Bridge
+          </button>
+        </Link>
         <Link href="/stack">
           <button type="button" className="secondary">
             Luxor Stack

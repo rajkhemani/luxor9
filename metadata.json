@@ -1,5 +1,6 @@
 {
   "name": "LUXOR9 Control Tower",
   "description": "Control AI execution. Prove every outcome.",
-  "requestFramePermissions": []
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

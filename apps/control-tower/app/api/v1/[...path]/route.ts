@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildAguiCmoResponse } from "@/lib/agui-demo";
 import {
   createDraftWorkflow,
   decideApproval,
@@ -98,6 +99,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
       state,
     );
     return NextResponse.json(executeApprovedBlueprint(wf, state));
+  }
+
+  if (joined === "agui/cmo") {
+    return buildAguiCmoResponse(body);
   }
 
   return NextResponse.json({ detail: `Unknown endpoint /api/v1/${joined}` }, { status: 404 });

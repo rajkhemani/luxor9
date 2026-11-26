@@ -9,9 +9,10 @@ export default function TowerLayout({ children }: { children: React.ReactNode })
         </Link>
         <nav>
           <Link href="/home">Home</Link>
-          <Link href="/">Overview</Link>
+          <Link href="/tower">Overview</Link>
           <Link href="/stack">Stack</Link>
           <Link href="/command">Command Bridge</Link>
+          <Link href="/voice">Voice Bridge</Link>
           <Link href="/chat">Chat</Link>
           <Link href="/workflows">Workflows</Link>
           <Link href="/approvals">Approvals</Link>
