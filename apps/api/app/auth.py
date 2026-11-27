@@ -162,8 +162,13 @@ async def _resolve_tenant_for_claims(
         demo_tenant = demo.scalar_one_or_none()
         if demo_tenant is not None:
             demo_tenant.clerk_org_id = str(org_id)
-            await db.flush()
-            return demo_tenant, role
+            try:
+                async with db.begin_nested():
+                    await db.flush()
+                return demo_tenant, role
+            except IntegrityError:
+                linked = await db.execute(select(Tenant).where(Tenant.clerk_org_id == str(org_id)))
+                return linked.scalar_one(), role
 
         org_slug = claims.get("org_slug") or f"org-{org_id}"
         org_name = str(claims.get("org_name") or org_slug)

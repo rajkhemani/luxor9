@@ -73,4 +73,6 @@ async def get_jwk(url: str, kid: str | None, *, ttl_seconds: int = _DEFAULT_TTL_
 
     if len(keys) == 1:
         return next(iter(keys.values()))
-    raise JWKSError("JWT missing kid and JWKS has multiple keys")
+    if not keys:
+        raise JWKSError("JWKS response contained no keys")
+    raise JWKSError("JWT missing kid and JWKS does not contain exactly one key")
