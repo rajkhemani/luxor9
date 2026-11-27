@@ -1,9 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { isClerkEnabled } from "./auth-mode";
+import { isClerkEnabled, requireClerkInProduction } from "./auth-mode";
 
-/** Returns an unauthorized response when Clerk is enabled and there is no session. */
+/** Returns an unauthorized response when auth is required and missing. */
 export async function requireUserOrUnauthorized(): Promise<NextResponse | null> {
+  if (requireClerkInProduction()) {
+    return NextResponse.json(
+      { error: "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production" },
+      { status: 503 },
+    );
+  }
   if (!isClerkEnabled()) return null;
   const session = await auth();
   if (!session.userId) {

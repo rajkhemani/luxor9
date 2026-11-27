@@ -34,8 +34,8 @@ class Settings(BaseSettings):
 
     @property
     def authorized_party_list(self) -> list[str]:
-        raw = self.clerk_authorized_parties or self.clerk_publishable_key
-        return [p.strip() for p in raw.split(",") if p.strip()]
+        # Do not fall back to publishable key — Clerk azp is typically an origin URL.
+        return [p.strip() for p in self.clerk_authorized_parties.split(",") if p.strip()]
 
 
 @lru_cache

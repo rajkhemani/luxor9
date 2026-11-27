@@ -4,11 +4,21 @@ export function isClerkEnabled(): boolean {
   return Boolean(key && key.startsWith("pk_"));
 }
 
-/** Explicit local demo bypass — never enable in production builds with Clerk. */
+export function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+/**
+ * Explicit local demo bypass — never enable in production builds.
+ * Production without Clerk is a misconfiguration (fail closed).
+ */
 export function allowDemoAuthHeader(): boolean {
+  if (isProductionRuntime()) return false;
   if (isClerkEnabled()) return false;
-  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_AUTH !== "true") {
-    return false;
-  }
   return true;
+}
+
+/** Production must configure Clerk; used by middleware and paid routes. */
+export function requireClerkInProduction(): boolean {
+  return isProductionRuntime() && !isClerkEnabled();
 }

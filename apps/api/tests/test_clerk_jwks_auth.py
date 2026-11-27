@@ -192,8 +192,12 @@ async def test_me_accepts_verified_bearer(clerk_settings, monkeypatch):
         body = res.json()
         assert body["clerk_user_id"] == "user_clerk_abc"
         assert body["email"] == "founder@luxor9.test"
-        assert body["role"] in {"admin", "member", "approver"}
+        assert body["role"] == "admin"
         assert body["tenant_id"]
+        # Org-mapped tenant must not be the shared personal fallback.
+        me2 = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token}"})
+        assert me2.json()["tenant_id"] == body["tenant_id"]
+        assert me2.json()["role"] == "admin"
     await engine.dispose()
 
 
@@ -224,3 +228,54 @@ async def test_agui_cmo_requires_auth_in_production(clerk_settings):
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         res = await client.post("/api/v1/agui/cmo", json={"threadId": "t1", "messages": []})
         assert res.status_code in {401, 403}
+
+
+@pytest.mark.asyncio
+async def test_personal_tenants_are_isolated(clerk_settings, monkeypatch, jwks_payload):
+    monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+    get_settings.cache_clear()
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def _override_db():
+        async with Session() as session:
+            yield session
+
+    app = create_app()
+    app.dependency_overrides[get_db] = _override_db
+    token_a = _sign(_base_claims(sub="user_a", org_id=None, org_role=None, org_slug=None))
+    token_b = _sign(_base_claims(sub="user_b", org_id=None, org_role=None, org_slug=None, email="b@test"))
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        a = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token_a}"})
+        b = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token_b}"})
+        assert a.status_code == 200 and b.status_code == 200
+        assert a.json()["tenant_id"] != b.json()["tenant_id"]
+        create = await client.post(
+            "/api/v1/workflows",
+            json={"objective": "User A private workflow", "context": {}},
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        assert create.status_code == 200
+        wf_id = create.json()["id"]
+        denied = await client.get(
+            f"/api/v1/workflows/{wf_id}",
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert denied.status_code == 404
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_production_rejects_auth_disabled_for_tests(clerk_settings, monkeypatch):
+    monkeypatch.setenv("AUTH_DISABLED_FOR_TESTS", "true")
+    get_settings.cache_clear()
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        res = await client.get("/api/v1/me", headers={"X-Demo-User": "user_demo_admin"})
+        assert res.status_code in {401, 503}
+    get_settings.cache_clear()

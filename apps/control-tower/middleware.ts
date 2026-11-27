@@ -1,8 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const clerkEnabled = Boolean(clerkKey && clerkKey.startsWith("pk_"));
+const isProduction = process.env.NODE_ENV === "production";
 
 const isProtectedTowerRoute = createRouteMatcher([
   "/tower(.*)",
@@ -29,7 +30,13 @@ export default clerkEnabled
         await auth.protect();
       }
     })
-  : function passthrough() {
+  : function passthrough(req: NextRequest) {
+      if (isProduction && isProtectedTowerRoute(req)) {
+        return NextResponse.json(
+          { error: "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required in production" },
+          { status: 503 },
+        );
+      }
       return NextResponse.next();
     };
 

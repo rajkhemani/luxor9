@@ -3,13 +3,27 @@ import {
   CopilotRuntime,
   createCopilotRuntimeHandler,
 } from "@copilotkit/runtime/v2";
+import { auth } from "@clerk/nextjs/server";
 import { localAguiCmoFetch } from "@/lib/agui-demo";
 import { localAguiDubaiFetch } from "@/lib/agui-dubai";
+import { isClerkEnabled } from "@/lib/auth-mode";
 
 const aguiUrl = process.env.AGUI_CMO_URL;
 
+async function authorizedAguiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  if (isClerkEnabled()) {
+    const session = await auth();
+    const token = await session.getToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+  return fetch(input, { ...init, headers });
+}
+
 const cmoAgent = aguiUrl
-  ? new HttpAgent({ url: aguiUrl })
+  ? new HttpAgent({ url: aguiUrl, fetch: authorizedAguiFetch })
   : new HttpAgent({
       url: "http://local-demo/api/v1/agui/cmo",
       fetch: localAguiCmoFetch,

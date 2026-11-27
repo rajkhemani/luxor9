@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,6 +12,16 @@ from app.config import get_settings
 from app.database import get_db
 from app.models.entities import Membership, RoleName, Tenant, User
 from app.security.clerk_jwt import ClerkTokenError, verify_clerk_token
+
+# Exact Clerk role identifiers only — never substring match custom roles.
+_CLERK_ROLE_MAP = {
+    "org:admin": RoleName.admin,
+    "admin": RoleName.admin,
+    "org:approver": RoleName.approver,
+    "approver": RoleName.approver,
+    "org:member": RoleName.member,
+    "member": RoleName.member,
+}
 
 
 @dataclass
@@ -26,19 +37,17 @@ class Principal:
 
 
 def _demo_auth_allowed() -> bool:
+    """Demo auth is never allowed in production, even if AUTH_DISABLED_FOR_TESTS is set."""
     settings = get_settings()
+    if settings.environment == "production":
+        return False
     return settings.auth_disabled_for_tests or settings.environment == "development"
 
 
 def _role_from_org_claim(org_role: str | None) -> RoleName:
     if not org_role:
         return RoleName.member
-    normalized = org_role.lower()
-    if "admin" in normalized:
-        return RoleName.admin
-    if "approver" in normalized:
-        return RoleName.approver
-    return RoleName.member
+    return _CLERK_ROLE_MAP.get(org_role.lower(), RoleName.member)
 
 
 def _slugify(value: str) -> str:
@@ -102,50 +111,105 @@ async def _ensure_demo_principal(db: AsyncSession, clerk_user_id: str, email: st
     )
 
 
-async def _resolve_tenant_for_claims(db: AsyncSession, claims: dict) -> tuple[Tenant, RoleName]:
+async def _get_or_create_tenant(
+    db: AsyncSession,
+    *,
+    slug: str,
+    name: str,
+    clerk_org_id: str | None,
+) -> Tenant:
+    if clerk_org_id:
+        result = await db.execute(select(Tenant).where(Tenant.clerk_org_id == clerk_org_id))
+        tenant = result.scalar_one_or_none()
+        if tenant is not None:
+            return tenant
+    else:
+        result = await db.execute(select(Tenant).where(Tenant.slug == slug))
+        tenant = result.scalar_one_or_none()
+        if tenant is not None:
+            return tenant
+
+    tenant = Tenant(name=name[:255], slug=slug[:100], clerk_org_id=clerk_org_id)
+    db.add(tenant)
+    try:
+        async with db.begin_nested():
+            await db.flush()
+    except IntegrityError:
+        if clerk_org_id:
+            result = await db.execute(select(Tenant).where(Tenant.clerk_org_id == clerk_org_id))
+        else:
+            result = await db.execute(select(Tenant).where(Tenant.slug == slug))
+        tenant = result.scalar_one()
+    return tenant
+
+
+async def _resolve_tenant_for_claims(
+    db: AsyncSession, claims: dict, clerk_user_id: str
+) -> tuple[Tenant, RoleName]:
     org_id = claims.get("org_id")
-    org_slug = claims.get("org_slug") or (f"org-{org_id}" if org_id else "luxor9-personal")
-    org_name = claims.get("org_name") or org_slug
     role = _role_from_org_claim(claims.get("org_role"))
 
     if org_id:
-        result = await db.execute(select(Tenant).where(Tenant.clerk_org_id == org_id))
-        tenant = result.scalar_one_or_none()
-        if tenant is None:
-            slug = _slugify(str(org_slug))
-            # Avoid unique collisions across orgs.
-            slug = f"{slug}-{org_id[-8:]}" if org_id else slug
-            tenant = Tenant(name=str(org_name)[:255], slug=slug[:100], clerk_org_id=org_id)
-            db.add(tenant)
+        existing = await db.execute(select(Tenant).where(Tenant.clerk_org_id == str(org_id)))
+        tenant = existing.scalar_one_or_none()
+        if tenant is not None:
+            return tenant, role
+
+        # One-time association: link unlinked seed demo tenant to first Clerk org.
+        demo = await db.execute(
+            select(Tenant).where(Tenant.slug == "luxor9-re-demo", Tenant.clerk_org_id.is_(None))
+        )
+        demo_tenant = demo.scalar_one_or_none()
+        if demo_tenant is not None:
+            demo_tenant.clerk_org_id = str(org_id)
             await db.flush()
+            return demo_tenant, role
+
+        org_slug = claims.get("org_slug") or f"org-{org_id}"
+        org_name = str(claims.get("org_name") or org_slug)
+        slug = f"{_slugify(str(org_slug))}-{str(org_id)[-8:]}"
+        tenant = await _get_or_create_tenant(
+            db, slug=slug, name=org_name, clerk_org_id=str(org_id)
+        )
         return tenant, role
 
-    # No active Clerk org — personal/default demo tenant for verified human.
-    result = await db.execute(select(Tenant).where(Tenant.slug == "luxor9-re-demo"))
-    tenant = result.scalar_one_or_none()
-    if tenant is None:
-        tenant = Tenant(name="Luxor9 Real-Estate Developers", slug="luxor9-re-demo")
-        db.add(tenant)
-        await db.flush()
-    return tenant, RoleName.admin if "admin" in str(claims.get("sub", "")) else RoleName.member
+    # No active Clerk org — isolate each verified human in a personal tenant.
+    personal_slug = f"user-{_slugify(clerk_user_id)}"[:100]
+    tenant = await _get_or_create_tenant(
+        db,
+        slug=personal_slug,
+        name=f"Personal · {clerk_user_id}"[:255],
+        clerk_org_id=None,
+    )
+    return tenant, RoleName.member
 
 
 async def _principal_from_claims(db: AsyncSession, claims: dict) -> Principal:
     clerk_user_id = str(claims["sub"])
-    email = str(claims.get("email") or f"{clerk_user_id}@users.clerk.local")
-    display_name = str(claims.get("name") or claims.get("email") or clerk_user_id)
+    claim_email = claims.get("email")
+    claim_name = claims.get("name") or claims.get("email")
 
     result = await db.execute(select(User).where(User.clerk_user_id == clerk_user_id))
     user = result.scalar_one_or_none()
     if user is None:
+        email = str(claim_email or f"{clerk_user_id}@users.clerk.local")
+        display_name = str(claim_name or clerk_user_id)
         user = User(clerk_user_id=clerk_user_id, email=email, display_name=display_name)
         db.add(user)
-        await db.flush()
+        try:
+            async with db.begin_nested():
+                await db.flush()
+        except IntegrityError:
+            result = await db.execute(select(User).where(User.clerk_user_id == clerk_user_id))
+            user = result.scalar_one()
     else:
-        user.email = email
-        user.display_name = display_name
+        # Preserve stored profile when optional claims are absent.
+        if claim_email:
+            user.email = str(claim_email)
+        if claim_name:
+            user.display_name = str(claim_name)
 
-    tenant, role = await _resolve_tenant_for_claims(db, claims)
+    tenant, role_from_claim = await _resolve_tenant_for_claims(db, claims, clerk_user_id)
 
     membership_result = await db.execute(
         select(Membership).where(
@@ -155,12 +219,21 @@ async def _principal_from_claims(db: AsyncSession, claims: dict) -> Principal:
     )
     membership = membership_result.scalar_one_or_none()
     if membership is None:
-        membership = Membership(tenant_id=tenant.id, user_id=user.id, role=role)
+        membership = Membership(tenant_id=tenant.id, user_id=user.id, role=role_from_claim)
         db.add(membership)
-    else:
-        # Keep membership role in sync with Clerk org role when present.
-        if claims.get("org_role"):
-            membership.role = role
+        try:
+            async with db.begin_nested():
+                await db.flush()
+        except IntegrityError:
+            membership_result = await db.execute(
+                select(Membership).where(
+                    Membership.tenant_id == tenant.id,
+                    Membership.user_id == user.id,
+                )
+            )
+            membership = membership_result.scalar_one()
+    # Do not overwrite persistent membership roles from session-token snapshots.
+    # Authoritative role sync belongs to Clerk webhooks / admin APIs (Phase C).
 
     await db.commit()
     return Principal(
@@ -182,21 +255,30 @@ async def get_principal(
 ) -> Principal:
     settings = get_settings()
 
-    # Production fail-closed: demo headers never authenticate.
+    # Production: demo headers are always rejected (test flag cannot override).
+    if settings.environment == "production" and x_demo_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Demo auth is disabled in production",
+        )
+    if settings.environment == "production" and settings.auth_disabled_for_tests:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AUTH_DISABLED_FOR_TESTS cannot be enabled in production",
+        )
+
     if x_demo_user and not _demo_auth_allowed():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Demo auth is disabled outside development/tests",
         )
 
-    # Explicit demo / test path only when development or AUTH_DISABLED_FOR_TESTS.
+    # Explicit demo / test path only when development or AUTH_DISABLED_FOR_TESTS (non-prod).
     if _demo_auth_allowed() and (x_demo_user or settings.auth_disabled_for_tests):
-        # Prefer Bearer when both present in development so JWKS path stays testable.
         if not (authorization and authorization.lower().startswith("bearer ")):
             demo_id = x_demo_user or "user_demo_admin"
             return await _ensure_demo_principal(db, demo_id, f"{demo_id}@luxor9.local")
 
-    # Development convenience: no Authorization and no demo header → demo admin.
     if _demo_auth_allowed() and not authorization:
         return await _ensure_demo_principal(db, "user_demo_admin", "user_demo_admin@luxor9.local")
 

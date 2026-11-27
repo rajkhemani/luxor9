@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from jose import JWTError, jwk, jwt
@@ -9,6 +10,8 @@ from jose.exceptions import ExpiredSignatureError, JWTClaimsError
 
 from app.config import Settings
 from app.security.jwks import JWKSError, get_jwk
+
+logger = logging.getLogger("luxor9.auth.clerk")
 
 
 class ClerkTokenError(Exception):
@@ -30,6 +33,15 @@ def _normalize_org_claims(claims: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _party_allowed(claims: dict[str, Any], authorized: list[str]) -> bool:
+    azp = claims.get("azp")
+    if azp is not None:
+        return azp in authorized
+    aud = claims.get("aud")
+    aud_values = aud if isinstance(aud, list) else ([aud] if aud else [])
+    return any(a in authorized for a in aud_values)
+
+
 async def verify_clerk_token(token: str, settings: Settings) -> dict[str, Any]:
     if not token or token.count(".") < 2:
         raise ClerkTokenError("Malformed token")
@@ -41,6 +53,12 @@ async def verify_clerk_token(token: str, settings: Settings) -> dict[str, Any]:
 
     if not settings.clerk_jwks_url:
         raise ClerkTokenError("Clerk JWKS is not configured; unverified bearer tokens are rejected")
+
+    authorized = settings.authorized_party_list
+    if settings.environment == "production" and not authorized:
+        raise ClerkTokenError(
+            "CLERK_AUTHORIZED_PARTIES is required in production (azp/aud allowlist)"
+        )
 
     try:
         header = jwt.get_unverified_header(token)
@@ -56,8 +74,10 @@ async def verify_clerk_token(token: str, settings: Settings) -> dict[str, Any]:
         jwk_data = await get_jwk(settings.clerk_jwks_url, kid)
         key = jwk.construct(jwk_data, algorithm="RS256")
     except JWKSError as exc:
+        logger.warning("jwks_key_resolution_failed kid=%s error=%s", kid, exc)
         raise ClerkTokenError(str(exc)) from exc
     except Exception as exc:  # noqa: BLE001 — wrap provider/crypto failures
+        logger.exception("jwks_provider_failure kid=%s", kid)
         raise ClerkTokenError("Unable to resolve JWKS signing key") from exc
 
     options = {
@@ -84,13 +104,7 @@ async def verify_clerk_token(token: str, settings: Settings) -> dict[str, Any]:
     if not claims.get("sub"):
         raise ClerkTokenError("Token missing subject")
 
-    authorized = settings.authorized_party_list
-    if authorized:
-        azp = claims.get("azp")
-        aud = claims.get("aud")
-        aud_values = aud if isinstance(aud, list) else ([aud] if aud else [])
-        party_ok = (azp in authorized) or any(a in authorized for a in aud_values)
-        if not party_ok:
-            raise ClerkTokenError("Token authorized party/audience mismatch")
+    if authorized and not _party_allowed(claims, authorized):
+        raise ClerkTokenError("Token authorized party/audience mismatch")
 
     return _normalize_org_claims(claims)

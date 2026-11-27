@@ -10,13 +10,12 @@ async def test_production_rejects_unverified_bearer(client, monkeypatch):
     monkeypatch.setenv("CLERK_JWKS_URL", "")
     get_settings.cache_clear()
     try:
-        res = await client.get("/api/v1/me", headers={"Authorization": "Bearer totally-fake"})
+        # Syntactically JWT-shaped so missing-JWKS gate is exercised (not malformed).
+        shaped = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1In0.sig"
+        res = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {shaped}"})
         assert res.status_code == 401
         detail = res.json()["detail"].lower()
-        assert any(
-            marker in detail
-            for marker in ("jwks", "unverified", "malformed", "invalid", "configured")
-        )
+        assert "jwks" in detail or "configured" in detail or "unverified" in detail
     finally:
         monkeypatch.setenv("ENVIRONMENT", "development")
         monkeypatch.setenv("AUTH_DISABLED_FOR_TESTS", "true")

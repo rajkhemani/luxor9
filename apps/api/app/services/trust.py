@@ -169,7 +169,8 @@ async def decide_approval(
     if approval.status != ApprovalStatus.pending:
         raise ValueError("approval_not_pending")
     # Humans and agents must never approve their own consequential request.
-    if approval.principal_id == approver_user_id:
+    # Requesters may still reject/cancel their own pending request.
+    if decision == "approve" and approval.principal_id == approver_user_id:
         raise ValueError("self_approval_forbidden")
     expires = approval.expires_at
     if expires.tzinfo is None:
