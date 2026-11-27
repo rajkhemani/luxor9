@@ -202,6 +202,38 @@ async def test_me_accepts_verified_bearer(clerk_settings, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_org_role_demotion_updates_membership(clerk_settings, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+    get_settings.cache_clear()
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def _override_db():
+        async with Session() as session:
+            yield session
+
+    app = create_app()
+    app.dependency_overrides[get_db] = _override_db
+    admin_token = _sign(_base_claims(org_role="org:admin"))
+    member_token = _sign(_base_claims(org_role="org:member"))
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {admin_token}"})
+        assert first.status_code == 200
+        assert first.json()["role"] == "admin"
+        demoted = await client.get(
+            "/api/v1/me", headers={"Authorization": f"Bearer {member_token}"}
+        )
+        assert demoted.status_code == 200
+        assert demoted.json()["role"] == "member"
+        assert demoted.json()["tenant_id"] == first.json()["tenant_id"]
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
 async def test_production_rejects_demo_header(clerk_settings):
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
     async with engine.begin() as conn:

@@ -3,16 +3,26 @@
 Uses pure ASGI middleware (not BaseHTTPMiddleware) so streaming AG-UI
 responses are not buffered or re-piped through Starlette's anyio memory
 streams.
+
+After auth, request bodies are rewritten so ``threadId`` / ``thread_id`` are
+namespaced to the verified tenant+user. That binds MemorySaver checkpoints
+to the authenticated principal (L9-011 interim until Postgres checkpointer).
 """
 
 from __future__ import annotations
 
+import json
+import uuid
+from typing import Any
+
 from fastapi import HTTPException
 from starlette.responses import JSONResponse
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.auth import get_principal
+from app.auth import Principal, get_principal
 from app.database import SessionLocal
+
+_SCOPE_SEP = ":"
 
 
 def _header(scope: Scope, name: str) -> str | None:
@@ -28,6 +38,67 @@ def _is_public_agui_path(path: str, method: str) -> bool:
         return True
     normalized = path.rstrip("/")
     return normalized == "/api/v1/agui/status"
+
+
+def scoped_thread_id(principal: Principal, raw: str | None) -> str:
+    """Bind a client thread id to tenant+user; ignore any client-supplied scope prefix."""
+    client = (raw or "").strip() or str(uuid.uuid4())
+    parts = client.split(_SCOPE_SEP, 2)
+    if len(parts) == 3 and parts[0] and parts[1]:
+        # Drop a prior tenant:user: prefix so callers cannot spoof another scope.
+        client = parts[2] or str(uuid.uuid4())
+    return f"{principal.tenant_id}{_SCOPE_SEP}{principal.user_id}{_SCOPE_SEP}{client}"
+
+
+def _rewrite_thread_fields(payload: dict[str, Any], principal: Principal) -> dict[str, Any]:
+    out = dict(payload)
+    if "threadId" in out or "thread_id" in out:
+        raw = out.get("threadId") if out.get("threadId") is not None else out.get("thread_id")
+        scoped = scoped_thread_id(principal, None if raw is None else str(raw))
+        if "threadId" in out:
+            out["threadId"] = scoped
+        if "thread_id" in out:
+            out["thread_id"] = scoped
+    else:
+        # Ensure agent runs always land in a principal-scoped checkpoint key.
+        out["threadId"] = scoped_thread_id(principal, None)
+    return out
+
+
+def _replace_content_length(scope: Scope, length: int) -> Scope:
+    headers = [
+        (k, v)
+        for k, v in scope.get("headers", [])
+        if k.lower() != b"content-length"
+    ]
+    headers.append((b"content-length", str(length).encode("latin-1")))
+    return {**scope, "headers": headers}
+
+
+async def _read_body(receive: Receive) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        message = await receive()
+        if message["type"] != "http.request":
+            # Unexpected control message — ignore for body accumulation.
+            continue
+        chunks.append(message.get("body", b""))
+        if not message.get("more_body"):
+            break
+    return b"".join(chunks)
+
+
+def _receive_with_body(body: bytes) -> Receive:
+    sent = False
+
+    async def receive() -> Message:
+        nonlocal sent
+        if sent:
+            return {"type": "http.disconnect"}
+        sent = True
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    return receive
 
 
 class AguiAuthMiddleware:
@@ -49,7 +120,7 @@ class AguiAuthMiddleware:
         demo_user = _header(scope, "x-demo-user")
         async with SessionLocal() as db:
             try:
-                await get_principal(
+                principal = await get_principal(
                     authorization=authorization,
                     x_demo_user=demo_user,
                     db=db,
@@ -59,5 +130,18 @@ class AguiAuthMiddleware:
                 await response(scope, receive, send)
                 return
 
-        # Pass the live ASGI stream through unchanged after auth succeeds.
+        if method in {"POST", "PUT", "PATCH"}:
+            raw = await _read_body(receive)
+            try:
+                parsed = json.loads(raw.decode("utf-8") or "{}")
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                parsed = None
+            if isinstance(parsed, dict):
+                rewritten = _rewrite_thread_fields(parsed, principal)
+                body = json.dumps(rewritten).encode("utf-8")
+                scope = _replace_content_length(scope, len(body))
+                receive = _receive_with_body(body)
+            else:
+                receive = _receive_with_body(raw)
+
         await self.app(scope, receive, send)

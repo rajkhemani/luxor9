@@ -261,8 +261,11 @@ async def _principal_from_claims(db: AsyncSession, claims: dict) -> Principal:
                 )
             )
             membership = membership_result.scalar_one()
-    # Do not overwrite persistent membership roles from session-token snapshots.
-    # Authoritative role sync belongs to Clerk webhooks / admin APIs (Phase C).
+    elif claims.get("org_id") is not None:
+        # Verified org session: align membership to the current exact org_role claim
+        # so Clerk demotions/promotions take effect on the next token. Phase C webhooks
+        # still needed for near-real-time revoke before JWT expiry.
+        membership.role = role_from_claim
 
     await db.commit()
     return Principal(
