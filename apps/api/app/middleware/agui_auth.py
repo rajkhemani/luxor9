@@ -16,6 +16,7 @@ import uuid
 from typing import Any
 
 from fastapi import HTTPException
+from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -79,8 +80,10 @@ async def _read_body(receive: Receive) -> bytes:
     chunks: list[bytes] = []
     while True:
         message = await receive()
+        if message["type"] == "http.disconnect":
+            # Never spin on disconnect — that freezes the event loop.
+            raise ClientDisconnect()
         if message["type"] != "http.request":
-            # Unexpected control message — ignore for body accumulation.
             continue
         chunks.append(message.get("body", b""))
         if not message.get("more_body"):
@@ -88,15 +91,16 @@ async def _read_body(receive: Receive) -> bytes:
     return b"".join(chunks)
 
 
-def _receive_with_body(body: bytes) -> Receive:
+def _receive_with_body(body: bytes, original_receive: Receive) -> Receive:
+    """Replay the rewritten body once, then forward real disconnects from the server."""
     sent = False
 
     async def receive() -> Message:
         nonlocal sent
-        if sent:
-            return {"type": "http.disconnect"}
-        sent = True
-        return {"type": "http.request", "body": body, "more_body": False}
+        if not sent:
+            sent = True
+            return {"type": "http.request", "body": body, "more_body": False}
+        return await original_receive()
 
     return receive
 
@@ -131,7 +135,10 @@ class AguiAuthMiddleware:
                 return
 
         if method in {"POST", "PUT", "PATCH"}:
-            raw = await _read_body(receive)
+            try:
+                raw = await _read_body(receive)
+            except ClientDisconnect:
+                return
             try:
                 parsed = json.loads(raw.decode("utf-8") or "{}")
             except (UnicodeDecodeError, json.JSONDecodeError):
@@ -140,8 +147,8 @@ class AguiAuthMiddleware:
                 rewritten = _rewrite_thread_fields(parsed, principal)
                 body = json.dumps(rewritten).encode("utf-8")
                 scope = _replace_content_length(scope, len(body))
-                receive = _receive_with_body(body)
+                receive = _receive_with_body(body, receive)
             else:
-                receive = _receive_with_body(raw)
+                receive = _receive_with_body(raw, receive)
 
         await self.app(scope, receive, send)

@@ -6,12 +6,17 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from starlette.requests import ClientDisconnect, Request
 from starlette.responses import JSONResponse, StreamingResponse
 from starlette.routing import Route
 
 from app.auth import Principal
-from app.middleware.agui_auth import AguiAuthMiddleware, scoped_thread_id
+from app.middleware.agui_auth import (
+    AguiAuthMiddleware,
+    _read_body,
+    _receive_with_body,
+    scoped_thread_id,
+)
 from app.models.entities import RoleName
 
 
@@ -135,3 +140,28 @@ async def test_agui_auth_isolates_same_client_thread_across_principals(monkeypat
     assert a.json()["threadId"] == "tenant-a:user-a:same"
     assert b.json()["threadId"] == "tenant-b:user-b:same"
     assert a.json()["threadId"] != b.json()["threadId"]
+
+
+@pytest.mark.asyncio
+async def test_read_body_raises_on_disconnect_instead_of_spinning():
+    async def disconnecting_receive():
+        return {"type": "http.disconnect"}
+
+    with pytest.raises(ClientDisconnect):
+        await _read_body(disconnecting_receive)
+
+
+@pytest.mark.asyncio
+async def test_receive_with_body_forwards_original_receive_after_body():
+    calls = {"n": 0}
+
+    async def original_receive():
+        calls["n"] += 1
+        return {"type": "http.disconnect"}
+
+    receive = _receive_with_body(b'{"threadId":"x"}', original_receive)
+    first = await receive()
+    assert first == {"type": "http.request", "body": b'{"threadId":"x"}', "more_body": False}
+    second = await receive()
+    assert second == {"type": "http.disconnect"}
+    assert calls["n"] == 1
