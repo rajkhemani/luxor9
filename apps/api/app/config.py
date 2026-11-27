@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     clerk_publishable_key: str = ""
     clerk_jwks_url: str = ""
     clerk_issuer: str = ""
+    # Comma-separated azp/aud allowlist (typically the publishable key). Empty = skip azp check.
+    clerk_authorized_parties: str = ""
     auth_disabled_for_tests: bool = False
 
     model_provider: str = "stub"
@@ -29,6 +31,11 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
+
+    @property
+    def authorized_party_list(self) -> list[str]:
+        raw = self.clerk_authorized_parties or self.clerk_publishable_key
+        return [p.strip() for p in raw.split(",") if p.strip()]
 
 
 @lru_cache

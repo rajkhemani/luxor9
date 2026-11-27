@@ -12,7 +12,11 @@ async def test_production_rejects_unverified_bearer(client, monkeypatch):
     try:
         res = await client.get("/api/v1/me", headers={"Authorization": "Bearer totally-fake"})
         assert res.status_code == 401
-        assert "JWKS" in res.json()["detail"] or "unverified" in res.json()["detail"].lower()
+        detail = res.json()["detail"].lower()
+        assert any(
+            marker in detail
+            for marker in ("jwks", "unverified", "malformed", "invalid", "configured")
+        )
     finally:
         monkeypatch.setenv("ENVIRONMENT", "development")
         monkeypatch.setenv("AUTH_DISABLED_FOR_TESTS", "true")

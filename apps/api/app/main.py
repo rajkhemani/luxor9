@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
+from app.middleware.agui_auth import AguiAuthMiddleware
 from app.routers import (
     agents,
     approvals,
@@ -28,6 +29,8 @@ async def lifespan(_app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="LUXOR9 API", version="0.1.0", lifespan=lifespan)
+    # AguiAuthMiddleware is outermost so CORS can still answer preflight.
+    app.add_middleware(AguiAuthMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origin_list,
