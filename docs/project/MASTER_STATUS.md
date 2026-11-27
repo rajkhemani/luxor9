@@ -1,56 +1,46 @@
 # LUXOR9 — Master Status
 
+**How to read this:** One-page snapshot. Written for humans, not only engineers.  
 **Operating model:** Human-on-the-Loop (HOTL)  
-**Updated:** 2026-11-10  
-**Source of truth repo:** `https://github.com/rajkhemani/luxor9`
+**Updated:** 2026-11-22  
+**Code home:** https://github.com/rajkhemani/luxor9  
+**`main` tip this update reflects:** `911b817` (in-memory Control Tower mode exists — **not** used for the Dubai pitch)
 
-## LUXOR9 ENGINEERING STATUS
+## Plain-English summary
+
+We are preparing a Dubai real-estate developer demo: **voice and chat**, Interview Me questions (PR #14), evidence answer, **one** card, **one** Approve. The pitch uses the **real cloud backend**. Phase 00 is good enough for demos; formal sign-off comes later. Approve runs a **read-only live API call** and shows real data on the card (**D-012 closed**).
 
 | Field | Value |
 |---|---|
-| Current phase | **PHASE 00 — Project discovery and baseline** |
-| Current task | P00-BASELINE — Phase 00 discovery report + registers |
-| Overall project status | **AWAITING_FOUNDER_APPROVAL** (Phase 00 checkpoint) |
-| Phase progress | Phase 00 deliverables drafted; gate open |
-| Verified features | See §Verified |
-| Unverified features | See §Unverified |
-| Failed tests | None in last local API/UI checks (16 pytest; tsc clean) |
-| Open security issues | Clerk JWKS verification not implemented (demo auth in development) |
-| Open architectural decisions | D-001…D-005 in `DECISION_REGISTER.md` |
-| Blocked tasks | None blocked by engineering; Phase 01+ blocked by Phase 00 approval |
-| Founder approvals needed | Approve Phase 00 baseline; choose next ticket L9-010 vs L9-012 (and open PRs #4/#5) |
-| Evidence generated | `docs/evidence/phase-reports/P00-discovery.md` |
-| Next recommended action | Founder review Phase 00 report; explicit approve before Phase 01+ |
+| Formal phase | Phase 00 ungated for HOTL ACCEPTED; **D-013** = ok for demos |
+| Hottest work | Dubai demo UX + land PR #14 + **implement** L9-DEMO-APPROVE-LIVE (read-only live call) |
+| Overall status | Demo decisions accepted; D-012 resolved; implementation next |
+| What works on `main` | Thin CMO loop; synthetic research; sandbox publish adapter; Tower in-memory mode available |
+| What the pitch must use | Real API / cloud backend (D-011b), not in-memory mode |
+| Open security gap | Clerk JWKS unfinished |
+| Decisions just accepted | D-011, D-011a, D-011b, D-011c, **D-012** (read-only live Approve), D-013 |
+| Open PR of note | [#14](https://github.com/rajkhemani/luxor9/pull/14) Interview Me + B2B RE pitch |
+| Next engineering step | Land PR #14 (or deploy that branch) + wire Approve → read-only live API → show real data on the card |
 
-## Verified (local evidence this session)
+## Verified (so far)
 
-- API health + AG-UI status endpoints respond.
-- Pytest suite: **16 passed** (incl. CORS + AG-UI connectivity contract).
-- Control Tower `tsc --noEmit`: clean on `main`.
-- Classic Chat browser path: working after CORS fix (retest evidence).
+- API health / AG-UI status respond when API is up.
+- Earlier pytest baseline green (16 passed, 2026-11-10).
+- Classic Chat worked after CORS fix.
+- `main` has in-memory Tower demo store (`demo-store.ts`, `/api/v1/[...path]`) for empty API base — kept for offline/dev, not the pitch.
 
-## Unverified / partial
+## Partial / not done
 
-- CopilotKit `/copilot` agent bind fix: implemented on PR #5 — browser retest pending accept.
-- Live web research adapters (still synthetic).
-- Postgres LangGraph checkpointer resume after process kill.
-- Clerk-authenticated human sessions.
-- Pilot-grade evidence quality / eval corpus thresholds.
+- Voice + chat excellent UX (approved; not fully built).
+- Interview Me on `main` (still PR #14).
+- Read-only live Approve wiring (D-012 chosen; code not done yet).
+- Live research quality; Postgres checkpointer resume; Playwright e2e.
 
-## Progress dimensions (independent)
+## Completeness (rough)
 
-| Dimension | Estimate | Basis |
+| Area | Level | Plain words |
 |---|---|---|
-| Product completeness | Thin vertical slice | Loop shape exists; research quality not pilot-grade |
-| Engineering completeness | Foundation partial | Monolith + Tower + AG-UI wired; many Phase 01–13 items remain |
-| Security completeness | Pre-pilot | Demo auth; JWKS missing; sandbox publish only |
-| Test/verification completeness | Early | Unit/API strong; Playwright e2e not yet |
-| Deployment readiness | Local/pilot draft | Compose + Render blueprint; not founder-authorized prod |
-
-## Open pull requests (as of report)
-
-| PR | Title | Notes |
-|---|---|---|
-| [#4](https://github.com/rajkhemani/luxor9/pull/4) | Phase 0 architecture validation plan | Docs review gate |
-| [#5](https://github.com/rajkhemani/luxor9/pull/5) | CopilotChat agentId fix | GREEN bugfix from UI retest |
-| [#2](https://github.com/rajkhemani/luxor9/pull/2) | Dependabot npm bumps | Review separately |
+| Product | Thin slice | Loop exists; pitch UX still being locked |
+| Engineering | Foundation partial | Monolith + Tower + AG-UI |
+| Security | Pre-pilot | Demo auth; Approve is read-only live call only |
+| Deploy | Local / draft | Production stays RED without founder approval |

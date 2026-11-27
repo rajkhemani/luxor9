@@ -4,7 +4,7 @@ HOTL phases map to the Master Meta-Prompt (00–13). Prior “Phase 0 discovery 
 
 | Phase | Name | Status | Notes |
 |---|---|---|---|
-| **00** | Project discovery and baseline | **IN_REVIEW** | This checkpoint |
+| **00** | Project discovery and baseline | **IN_REVIEW** (demo-ok per D-013) | Formal ACCEPTED still later; demos may proceed |
 | 01 | Repository and development foundation | PARTIAL → BACKLOG | Scaffold/CI/Makefile exist; formal accept pending |
 | 02 | Database and data foundation | PARTIAL → BACKLOG | Models/Alembic exist; ERD + recovery docs incomplete |
 | 03 | Identity, auth, multi-tenancy | PARTIAL → BACKLOG | Tenancy + RBAC models; Clerk JWKS missing |

@@ -1,0 +1,13 @@
+---
+description: Always ask simple clarifying questions one at a time before multi-option work
+alwaysApply: true
+---
+
+# Ask simplifying questions (standing rule)
+
+- Before and during work that has **multiple options** or **unclear scope**, ask the user a **simplifying question**.
+- Use **simple language** (no jargon when a plain word works).
+- Ask **one question at a time**, then **wait for the answer** before proceeding on that choice.
+- Do not bundle several decisions into one question.
+- After the answer, continue; ask the next question only when another fork appears.
+- This rule applies to this Luxor9 workspace and agents working in it.

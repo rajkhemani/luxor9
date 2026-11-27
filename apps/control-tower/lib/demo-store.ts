@@ -419,6 +419,62 @@ export function handleChatMessage(
   };
 }
 
+/** Mock of D-012: read-only live API response shown for display only (no outbound send). */
+export type DubaiApproveLiveDisplay = {
+  decision: "D-012";
+  mode: "preview_mock";
+  read_only: true;
+  outbound_send: false;
+  fetched_at: string;
+  workflow_id: string;
+  note: string;
+  display: {
+    objective: string;
+    status: string;
+    active_workflows: number;
+    pending_approvals: number;
+    open_exceptions: number;
+  };
+  evidence: EvidenceItem[];
+  claims: ClaimItem[];
+  approval: ApprovalItem | null;
+};
+
+export function previewDubaiApproveLiveRead(
+  workflowId = "wf_dubai_creek_001",
+  state = getDemoState(),
+): DubaiApproveLiveDisplay {
+  const wf = state.workflows.find((w) => w.id === workflowId) ?? state.workflows[0];
+  const overview = getOverview(state);
+  const evidence = state.evidenceByWorkflow[wf?.id ?? workflowId] ?? [];
+  const claims = state.claimsByWorkflow[wf?.id ?? workflowId] ?? [];
+  const approval =
+    state.approvals.find((a) => a.workflow_id === (wf?.id ?? workflowId) && a.status === "pending") ??
+    state.approvals.find((a) => a.workflow_id === (wf?.id ?? workflowId)) ??
+    null;
+
+  return {
+    decision: "D-012",
+    mode: "preview_mock",
+    read_only: true,
+    outbound_send: false,
+    fetched_at: new Date().toISOString(),
+    workflow_id: wf?.id ?? workflowId,
+    note:
+      "Preview mock of D-012 — read-only live call returning real data for display only. No CRM/ERP write, no paid ads, no customer message. Not wired to the cloud backend yet.",
+    display: {
+      objective: wf?.objective ?? "Dubai demo workflow",
+      status: wf?.status ?? "unknown",
+      active_workflows: overview.active_workflows,
+      pending_approvals: overview.pending_approvals,
+      open_exceptions: overview.open_exceptions,
+    },
+    evidence,
+    claims,
+    approval,
+  };
+}
+
 export function decideApproval(
   id: string,
   decision: "approve" | "reject",

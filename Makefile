@@ -41,9 +41,11 @@ ui-install:
 	cd apps/control-tower && npm install
 
 ui-dev:
+	# Honors a pre-set NEXT_PUBLIC_API_BASE_URL / AGUI_CMO_URL (cloud pitch);
+	# otherwise defaults to local FastAPI for rehearsal.
 	cd apps/control-tower && \
-	NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 \
-	AGUI_CMO_URL=http://127.0.0.1:8000/api/v1/agui/cmo \
+	NEXT_PUBLIC_API_BASE_URL=$${NEXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000} \
+	AGUI_CMO_URL=$${AGUI_CMO_URL:-http://127.0.0.1:8000/api/v1/agui/cmo} \
 	npm run dev
 
 ui-typecheck:
