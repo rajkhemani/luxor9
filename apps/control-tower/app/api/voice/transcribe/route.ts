@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUserOrUnauthorized } from "@/lib/require-user";
 import { getServerGenAI } from "@/lib/server-ai";
 
 const MAX_AUDIO_BASE64_BYTES = 12 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
+  const unauthorized = await requireUserOrUnauthorized();
+  if (unauthorized) return unauthorized;
   try {
     const body = (await req.json().catch(() => null)) as {
       audioBase64?: unknown;

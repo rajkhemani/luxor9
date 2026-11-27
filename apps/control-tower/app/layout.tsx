@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { ApiAuthBridge } from "@/components/auth/ApiAuthBridge";
+import { AppClerkProvider } from "@/components/auth/AppClerkProvider";
+import { isClerkEnabled } from "@/lib/auth-mode";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -39,12 +42,26 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const body = (
+    <body>
+      <ApiAuthBridge />
+      {children}
+    </body>
+  );
+  const tree = isClerkEnabled() ? (
+    <AppClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
+      {body}
+    </AppClerkProvider>
+  ) : (
+    body
+  );
+
   return (
     <html
       lang="en"
       className={`${plusJakarta.variable} ${cormorant.variable} ${jetbrainsMono.variable}`}
     >
-      <body>{children}</body>
+      {tree}
     </html>
   );
 }
