@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { ThinkingLevel } from "@google/genai";
+import { requireUserOrUnauthorized } from "@/lib/require-user";
 import { getServerGenAI } from "@/lib/server-ai";
 import {
   extractSpeakableSentences,
@@ -36,6 +37,8 @@ function encodeSse(event: Record<string, unknown>): Uint8Array {
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
+  const unauthorized = await requireUserOrUnauthorized();
+  if (unauthorized) return unauthorized;
   let body: TurnRequestBody;
   try {
     body = (await req.json()) as TurnRequestBody;

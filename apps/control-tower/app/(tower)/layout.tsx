@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TowerAuthControls } from "@/components/auth/TowerAuthControls";
 
 export default function TowerLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function TowerLayout({ children }: { children: React.ReactNode })
           <Link href="/atelier">Atelier</Link>
           <Link href="/metering">Metering</Link>
         </nav>
+        <TowerAuthControls />
       </header>
       <main className="tower-main">{children}</main>
     </>

@@ -6,8 +6,16 @@ import {
   handleChatMessage,
   listAgents,
 } from "./demo-store";
+import { buildAuthHeaders, type TokenGetter } from "./auth-headers";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+let tokenGetter: TokenGetter | undefined;
+
+/** Register Clerk getToken (or equivalent) for browser API calls. */
+export function setApiTokenGetter(getter: TokenGetter | undefined) {
+  tokenGetter = getter;
+}
 
 function useLocalServerStore(): boolean {
   return !API_BASE && typeof window === "undefined";
@@ -51,13 +59,14 @@ export type AguiStatus = {
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const base = API_BASE;
+  const authHeaders = await buildAuthHeaders(tokenGetter);
   let res: Response;
   try {
     res = await fetch(`${base}${path}`, {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        "X-Demo-User": "user_demo_admin",
+        ...authHeaders,
         ...(init?.headers || {}),
       },
       cache: "no-store",

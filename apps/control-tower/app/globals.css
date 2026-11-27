@@ -101,6 +101,27 @@ nav a.active {
   color: var(--mineral-ivory);
 }
 
+.tower-auth-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.auth-demo-pill,
+.auth-sign-in {
+  font-size: 0.85rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.auth-sign-in:hover {
+  color: var(--mineral-ivory);
+}
+
 h1,
 h2 {
   font-family: var(--font-display);

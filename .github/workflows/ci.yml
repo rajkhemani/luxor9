@@ -45,7 +45,10 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: apps/control-tower/package-lock.json
-      - run: npm ci
+          # Root workspaces require the repo-root lockfile for `npm ci`.
+          cache-dependency-path: package-lock.json
+      - name: Install
+        working-directory: .
+        run: npm ci
       - run: npm run typecheck
       - run: npm test

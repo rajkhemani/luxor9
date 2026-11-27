@@ -14,7 +14,7 @@ Statuses: BACKLOG | DISCOVERY | PLANNED | AWAITING_APPROVAL | APPROVED | IN_PROG
 
 | ID | Phase | Title | Status | Priority | Risk | Role | Acceptance (summary) |
 |---|---|---|---|---|---|---|---|
-| L9-010 | 03 | Clerk JWKS verification | AWAITING_APPROVAL | P0 | Amber | Security / Backend | Bearer verified; demo header blocked outside development |
+| L9-010 | 03 | Clerk JWKS verification + Tower Clerk | IN_REVIEW | P0 | Amber | Security / Backend | Bearer verified; demo header blocked outside development; Tower Clerk session |
 | L9-012 | 05/06 | CopilotKit official onboard (`bba95955d7ea`) | AWAITING_APPROVAL | P1 | Amber | Frontend / AI Systems | CLI applied without duplicating Trust logic |
 | L9-011 | 06 | Postgres checkpointer resume | BACKLOG | P1 | Amber | AI Orchestration | Kill/resume AG-UI thread |
 | L9-013 | 09/10 | Live research adapter v1 | BACKLOG | P1 | Amber | Backend / CMO | ≥1 live source type + hashes |

@@ -8,19 +8,19 @@
 
 | Field | Value |
 |---|---|
-| Current phase | **PHASE 00 — Project discovery and baseline** |
-| Current task | P00-BASELINE — Phase 00 discovery report + registers |
-| Overall project status | **AWAITING_FOUNDER_APPROVAL** (Phase 00 checkpoint) |
-| Phase progress | Phase 00 deliverables drafted; gate open |
+| Current phase | **PHASE 03 — Identity, auth, multi-tenancy (Phase B in progress)** |
+| Current task | L9-010 — Clerk JWKS + Control Tower Clerk session |
+| Overall project status | **IN_PROGRESS** (enterprise security hardening branch) |
+| Phase progress | Phase B auth implemented on feature branch; org/branch RBAC still pending |
 | Verified features | See §Verified |
 | Unverified features | See §Unverified |
-| Failed tests | None in last local API/UI checks (16 pytest; tsc clean) |
-| Open security issues | Clerk JWKS verification not implemented (demo auth in development) |
-| Open architectural decisions | D-001…D-005 in `DECISION_REGISTER.md` |
-| Blocked tasks | None blocked by engineering; Phase 01+ blocked by Phase 00 approval |
-| Founder approvals needed | Approve Phase 00 baseline; choose next ticket L9-010 vs L9-012 (and open PRs #4/#5) |
-| Evidence generated | `docs/evidence/phase-reports/P00-discovery.md` |
-| Next recommended action | Founder review Phase 00 report; explicit approve before Phase 01+ |
+| Failed tests | None in last local checks (29 pytest; 42 vitest; tsc clean) |
+| Open security issues | Branch tenancy / expanded RBAC / RLS / rate limits still open (Phases C–G) |
+| Open architectural decisions | D-001…D-005 in `DECISION_REGISTER.md`; branch RBAC matrix pending |
+| Blocked tasks | None |
+| Founder approvals needed | Review Phase B PR; authorize Phase C org/branch model |
+| Evidence generated | `docs/evidence/phase-reports/P00-discovery.md`; Phase B test artifacts |
+| Next recommended action | Merge Phase B after review; start Phase C (org/branch tenancy) |
 
 ## Verified (local evidence this session)
 

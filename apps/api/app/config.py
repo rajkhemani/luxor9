@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     clerk_publishable_key: str = ""
     clerk_jwks_url: str = ""
     clerk_issuer: str = ""
+    # Comma-separated azp/aud allowlist (Control Tower origins). Required in production.
+    clerk_authorized_parties: str = ""
     auth_disabled_for_tests: bool = False
 
     model_provider: str = "stub"
@@ -29,6 +31,11 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
+
+    @property
+    def authorized_party_list(self) -> list[str]:
+        # Do not fall back to publishable key — Clerk azp is typically an origin URL.
+        return [p.strip() for p in self.clerk_authorized_parties.split(",") if p.strip()]
 
 
 @lru_cache
