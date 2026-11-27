@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     clerk_publishable_key: str = ""
     clerk_jwks_url: str = ""
     clerk_issuer: str = ""
-    # Comma-separated azp/aud allowlist (typically the publishable key). Empty = skip azp check.
+    # Comma-separated azp/aud allowlist (Control Tower origins). Required in production.
     clerk_authorized_parties: str = ""
     auth_disabled_for_tests: bool = False
 
