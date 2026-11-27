@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -129,10 +129,12 @@ async def _get_or_create_tenant(
         if tenant is not None:
             return tenant
 
-    tenant = Tenant(name=name[:255], slug=slug[:100], clerk_org_id=clerk_org_id)
-    db.add(tenant)
+    # Contested insert must live inside the savepoint; begin_nested() auto-flushes
+    # pending state first, so adding before the nested block can poison the outer txn.
     try:
         async with db.begin_nested():
+            tenant = Tenant(name=name[:255], slug=slug[:100], clerk_org_id=clerk_org_id)
+            db.add(tenant)
             await db.flush()
     except IntegrityError:
         if clerk_org_id:
@@ -143,6 +145,26 @@ async def _get_or_create_tenant(
     return tenant
 
 
+async def _try_claim_seed_demo_tenant(db: AsyncSession, org_id: str) -> Tenant | None:
+    """Atomically link luxor9-re-demo to org_id only while still unlinked.
+
+    Two orgs racing must not both receive the seed tenant: the UPDATE predicate
+    ensures a single winner; losers return None and provision their own tenant.
+    """
+    result = await db.execute(
+        update(Tenant)
+        .where(Tenant.slug == "luxor9-re-demo", Tenant.clerk_org_id.is_(None))
+        .values(clerk_org_id=org_id)
+        .returning(Tenant.id)
+    )
+    claimed_id = result.scalar_one_or_none()
+    if claimed_id is None:
+        return None
+    await db.flush()
+    loaded = await db.execute(select(Tenant).where(Tenant.id == claimed_id))
+    return loaded.scalar_one()
+
+
 async def _resolve_tenant_for_claims(
     db: AsyncSession, claims: dict, clerk_user_id: str
 ) -> tuple[Tenant, RoleName]:
@@ -150,31 +172,29 @@ async def _resolve_tenant_for_claims(
     role = _role_from_org_claim(claims.get("org_role"))
 
     if org_id:
-        existing = await db.execute(select(Tenant).where(Tenant.clerk_org_id == str(org_id)))
+        org_id_str = str(org_id)
+        existing = await db.execute(select(Tenant).where(Tenant.clerk_org_id == org_id_str))
         tenant = existing.scalar_one_or_none()
         if tenant is not None:
             return tenant, role
 
-        # One-time association: link unlinked seed demo tenant to first Clerk org.
-        demo = await db.execute(
-            select(Tenant).where(Tenant.slug == "luxor9-re-demo", Tenant.clerk_org_id.is_(None))
-        )
-        demo_tenant = demo.scalar_one_or_none()
-        if demo_tenant is not None:
-            demo_tenant.clerk_org_id = str(org_id)
-            try:
-                async with db.begin_nested():
-                    await db.flush()
-                return demo_tenant, role
-            except IntegrityError:
-                linked = await db.execute(select(Tenant).where(Tenant.clerk_org_id == str(org_id)))
-                return linked.scalar_one(), role
+        # One-time association: first Clerk org to claim the unlinked seed demo wins.
+        claimed = await _try_claim_seed_demo_tenant(db, org_id_str)
+        if claimed is not None:
+            return claimed, role
 
-        org_slug = claims.get("org_slug") or f"org-{org_id}"
+        # Another org may have just claimed the seed, or our org_id may have linked
+        # via a concurrent request — re-check before creating a new tenant.
+        existing = await db.execute(select(Tenant).where(Tenant.clerk_org_id == org_id_str))
+        tenant = existing.scalar_one_or_none()
+        if tenant is not None:
+            return tenant, role
+
+        org_slug = claims.get("org_slug") or f"org-{org_id_str}"
         org_name = str(claims.get("org_name") or org_slug)
-        slug = f"{_slugify(str(org_slug))}-{str(org_id)[-8:]}"
+        slug = f"{_slugify(str(org_slug))}-{org_id_str[-8:]}"
         tenant = await _get_or_create_tenant(
-            db, slug=slug, name=org_name, clerk_org_id=str(org_id)
+            db, slug=slug, name=org_name, clerk_org_id=org_id_str
         )
         return tenant, role
 
@@ -199,10 +219,12 @@ async def _principal_from_claims(db: AsyncSession, claims: dict) -> Principal:
     if user is None:
         email = str(claim_email or f"{clerk_user_id}@users.clerk.local")
         display_name = str(claim_name or clerk_user_id)
-        user = User(clerk_user_id=clerk_user_id, email=email, display_name=display_name)
-        db.add(user)
         try:
             async with db.begin_nested():
+                user = User(
+                    clerk_user_id=clerk_user_id, email=email, display_name=display_name
+                )
+                db.add(user)
                 await db.flush()
         except IntegrityError:
             result = await db.execute(select(User).where(User.clerk_user_id == clerk_user_id))
@@ -224,10 +246,12 @@ async def _principal_from_claims(db: AsyncSession, claims: dict) -> Principal:
     )
     membership = membership_result.scalar_one_or_none()
     if membership is None:
-        membership = Membership(tenant_id=tenant.id, user_id=user.id, role=role_from_claim)
-        db.add(membership)
         try:
             async with db.begin_nested():
+                membership = Membership(
+                    tenant_id=tenant.id, user_id=user.id, role=role_from_claim
+                )
+                db.add(membership)
                 await db.flush()
         except IntegrityError:
             membership_result = await db.execute(

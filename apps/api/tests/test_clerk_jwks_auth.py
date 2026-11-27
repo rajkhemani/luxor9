@@ -231,6 +231,51 @@ async def test_agui_cmo_requires_auth_in_production(clerk_settings):
 
 
 @pytest.mark.asyncio
+async def test_second_org_does_not_steal_seed_demo_tenant(clerk_settings, monkeypatch):
+    """Atomic claim: first org links luxor9-re-demo; a second org gets its own tenant."""
+    from app.models.entities import Tenant
+
+    monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+    get_settings.cache_clear()
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+
+    async with Session() as session:
+        session.add(Tenant(name="Luxor9 Real-Estate Developers", slug="luxor9-re-demo"))
+        await session.commit()
+
+    async def _override_db():
+        async with Session() as session:
+            yield session
+
+    app = create_app()
+    app.dependency_overrides[get_db] = _override_db
+    token_a = _sign(
+        _base_claims(sub="user_org_a", org_id="org_first", org_slug="first", org_role="org:admin")
+    )
+    token_b = _sign(
+        _base_claims(
+            sub="user_org_b",
+            org_id="org_second",
+            org_slug="second",
+            org_role="org:admin",
+            email="b@test",
+        )
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        a = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token_a}"})
+        b = await client.get("/api/v1/me", headers={"Authorization": f"Bearer {token_b}"})
+        assert a.status_code == 200 and b.status_code == 200
+        assert a.json()["tenant_id"] != b.json()["tenant_id"]
+        assert a.json()["tenant_name"] == "Luxor9 Real-Estate Developers"
+    await engine.dispose()
+
+
+@pytest.mark.asyncio
 async def test_personal_tenants_are_isolated(clerk_settings, monkeypatch, jwks_payload):
     monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
     get_settings.cache_clear()
