@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     model_provider: str = "stub"
     model_api_key: str = ""
 
+    # Interview Me skill defaults (overridable per chat via context.interview_guardrails)
+    interview_enabled: bool = True
+    interview_min_questions: int = 3
+    interview_confidence_threshold: int = 95
+    interview_category: str = "b2b_real_estate"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]

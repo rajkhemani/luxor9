@@ -30,6 +30,7 @@ async def test_chat_followup_does_not_spawn_new_workflow(client):
         headers={"X-Demo-User": "user_demo_admin"},
     )
     wf_id = first.json()["workflow"]["id"]
+    assert first.json()["awaiting"] == "interview_answer"
     follow = await client.post(
         "/api/v1/chat",
         json={"message": "can you add more competitors?", "workflow_id": wf_id},
@@ -37,7 +38,9 @@ async def test_chat_followup_does_not_spawn_new_workflow(client):
     )
     assert follow.status_code == 200
     assert follow.json()["workflow"]["id"] == wf_id
-    assert follow.json()["awaiting"] == "blueprint_approval"
+    # Same draft interview thread — still probing, no second workflow.
+    assert follow.json()["awaiting"] in {"interview_answer", "interview_confirm"}
+    assert follow.json()["workflow"]["blueprint"] is None
 
     listed = await client.get("/api/v1/workflows", headers={"X-Demo-User": "user_demo_admin"})
     assert sum(1 for w in listed.json() if w["id"] == wf_id) == 1
@@ -48,7 +51,10 @@ async def test_chat_followup_does_not_spawn_new_workflow(client):
 async def test_member_cannot_approve_blueprint(client):
     created = await client.post(
         "/api/v1/chat",
-        json={"message": "Launch plan for marina"},
+        json={
+            "message": "Launch plan for marina",
+            "context": {"interview_guardrails": {"enabled": False}},
+        },
         headers={"X-Demo-User": "user_demo_admin"},
     )
     wf_id = created.json()["workflow"]["id"]
