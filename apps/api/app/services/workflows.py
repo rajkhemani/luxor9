@@ -163,6 +163,19 @@ async def decide_blueprint(
         raise
 
 
+def _claim_integrity_fields(claim: dict, default_uncertainty_notes: str = "") -> dict:
+    verification_reason = claim.get("verification_reason")
+    meta = dict(claim.get("meta") or {})
+    if verification_reason:
+        meta["verification_reason"] = verification_reason
+    return {
+        "uncertainty_notes": (
+            claim.get("uncertainty_notes") or verification_reason or default_uncertainty_notes
+        ),
+        "meta": meta,
+    }
+
+
 async def _persist_report_artifacts(db: AsyncSession, wf: Workflow, report: dict) -> None:
     claim_id_by_text: dict[str, str] = {}
     for src in report.get("sources", []):
@@ -198,6 +211,7 @@ async def _persist_report_artifacts(db: AsyncSession, wf: Workflow, report: dict
                     claim_type=claim.get("claim_type", "market"),
                     status=status,
                     confidence=float(claim.get("confidence", 0.5)),
+                    **_claim_integrity_fields(claim),
                 )
                 db.add(c)
                 await db.flush()
@@ -221,7 +235,9 @@ async def _persist_report_artifacts(db: AsyncSession, wf: Workflow, report: dict
                 claim_type=claim.get("claim_type", "forecast"),
                 status=status,
                 confidence=float(claim.get("confidence", 0.2)),
-                uncertainty_notes="No supporting evidence source",
+                **_claim_integrity_fields(
+                    claim, default_uncertainty_notes="No supporting evidence source"
+                ),
             )
             db.add(c)
 
