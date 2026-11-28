@@ -77,6 +77,7 @@ async def workflow_claims(
             status=c.status.value,
             confidence=c.confidence,
             uncertainty_notes=c.uncertainty_notes,
+            verification_reason=(c.meta or {}).get("verification_reason"),
         )
         for c in claims
     ]

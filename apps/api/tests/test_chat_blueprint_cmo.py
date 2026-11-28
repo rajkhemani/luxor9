@@ -30,6 +30,27 @@ async def test_chat_blueprint_approve_runs_cmo(client):
     assert "claims" in result["report"]
     assert any(c.get("status") == "UNVERIFIED" for c in result["report"]["claims"])
 
+    persisted = await client.get(
+        f"/api/v1/workflows/{wf_id}/claims",
+        headers={"X-Demo-User": "user_demo_admin"},
+    )
+    assert persisted.status_code == 200
+    persisted_claims = persisted.json()
+    reasoned_claims = [
+        claim
+        for claim in persisted_claims
+        if claim["verification_reason"]
+        == "synthetic_fixture_source_not_independently_verified"
+    ]
+    assert reasoned_claims
+    assert all(claim["status"] == "UNVERIFIED" for claim in reasoned_claims)
+    assert all(claim["confidence"] == 0.0 for claim in reasoned_claims)
+    assert all(
+        claim["uncertainty_notes"]
+        == "synthetic_fixture_source_not_independently_verified"
+        for claim in reasoned_claims
+    )
+
     evidence = await client.get(
         f"/api/v1/workflows/{wf_id}/evidence",
         headers={"X-Demo-User": "user_demo_admin"},

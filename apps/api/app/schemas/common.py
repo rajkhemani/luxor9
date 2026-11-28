@@ -121,6 +121,7 @@ class ClaimOut(BaseModel):
     status: str
     confidence: float
     uncertainty_notes: str = ""
+    verification_reason: str | None = None
 
 
 class AuditEventOut(BaseModel):
