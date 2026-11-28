@@ -118,8 +118,9 @@ async def run_specialist(agent_key: str, objective: str, context: dict) -> dict:
             {
                 "claim_text": src["excerpt"][:240],
                 "claim_type": topic.split()[0],
-                "status": "VERIFIED",
-                "confidence": 0.7,
+                "status": "UNVERIFIED",
+                "confidence": 0.0,
+                "verification_reason": "synthetic_fixture_source_not_independently_verified",
                 "source": src,
             }
         )
